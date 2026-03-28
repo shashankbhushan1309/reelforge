@@ -1,0 +1,13 @@
+{
+  "Common": {
+    "loading": "Cargando...",
+    "save": "Guardar",
+    "cancel": "Cancelar"
+  },
+  "Navigation": {
+    "dashboard": "Panel",
+    "vault": "Bóveda",
+    "settings": "Ajustes",
+    "logout": "Cerrar sesión"
+  }
+}

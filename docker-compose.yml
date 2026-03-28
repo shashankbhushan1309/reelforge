@@ -1,0 +1,259 @@
+# ═══════════════════════════════════════════════════════
+# ReelForge AI — Docker Compose (Local Development)
+# ═══════════════════════════════════════════════════════
+
+services:
+  # ── Database ──
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: reelforge-postgres
+    environment:
+      POSTGRES_USER: reelforge
+      POSTGRES_PASSWORD: reelforge
+      POSTGRES_DB: reelforge
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U reelforge"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis ──
+  redis:
+    image: redis:7-alpine
+    container_name: reelforge-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── FastAPI Backend ──
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: reelforge-api
+    ports:
+      - "8000:8000"
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://reelforge:reelforge@postgres:5432/reelforge
+      DATABASE_URL_SYNC: postgresql://reelforge:reelforge@postgres:5432/reelforge
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./apps/api:/app/apps/api
+      - ./shared:/app/shared
+      - ./uploads:/app/uploads
+
+  # ── Celery Workers ──
+  ingest-worker:
+    build:
+      context: .
+      dockerfile: workers/Dockerfile
+    container_name: reelforge-ingest-worker
+    command: celery -A workers.celery_app worker -Q reelforge:ingest -c 2 --loglevel=info
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://reelforge:reelforge@postgres:5432/reelforge
+      DATABASE_URL_SYNC: postgresql://reelforge:reelforge@postgres:5432/reelforge
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./workers:/app/workers
+      - ./shared:/app/shared
+      - ./uploads:/app/uploads
+
+  scene-worker:
+    build:
+      context: .
+      dockerfile: workers/Dockerfile
+    container_name: reelforge-scene-worker
+    command: celery -A workers.celery_app worker -Q reelforge:scene -c 2 --loglevel=info
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://reelforge:reelforge@postgres:5432/reelforge
+      DATABASE_URL_SYNC: postgresql://reelforge:reelforge@postgres:5432/reelforge
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./workers:/app/workers
+      - ./shared:/app/shared
+
+  scoring-worker:
+    build:
+      context: .
+      dockerfile: workers/Dockerfile
+    container_name: reelforge-scoring-worker
+    command: celery -A workers.celery_app worker -Q reelforge:score -c 2 --loglevel=info
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://reelforge:reelforge@postgres:5432/reelforge
+      DATABASE_URL_SYNC: postgresql://reelforge:reelforge@postgres:5432/reelforge
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./workers:/app/workers
+      - ./shared:/app/shared
+
+  audio-worker:
+    build:
+      context: .
+      dockerfile: workers/Dockerfile
+    container_name: reelforge-audio-worker
+    command: celery -A workers.celery_app worker -Q reelforge:audio -c 2 --loglevel=info
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://reelforge:reelforge@postgres:5432/reelforge
+      DATABASE_URL_SYNC: postgresql://reelforge:reelforge@postgres:5432/reelforge
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./workers:/app/workers
+      - ./shared:/app/shared
+
+  dna-worker:
+    build:
+      context: .
+      dockerfile: workers/Dockerfile
+    container_name: reelforge-dna-worker
+    command: celery -A workers.celery_app worker -Q reelforge:dna -c 2 --loglevel=info
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://reelforge:reelforge@postgres:5432/reelforge
+      DATABASE_URL_SYNC: postgresql://reelforge:reelforge@postgres:5432/reelforge
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./workers:/app/workers
+      - ./shared:/app/shared
+
+  blueprint-worker:
+    build:
+      context: .
+      dockerfile: workers/Dockerfile
+    container_name: reelforge-blueprint-worker
+    command: celery -A workers.celery_app worker -Q reelforge:blueprint -c 2 --loglevel=info
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://reelforge:reelforge@postgres:5432/reelforge
+      DATABASE_URL_SYNC: postgresql://reelforge:reelforge@postgres:5432/reelforge
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./workers:/app/workers
+      - ./shared:/app/shared
+
+  assembly-worker:
+    build:
+      context: .
+      dockerfile: workers/Dockerfile
+    container_name: reelforge-assembly-worker
+    command: celery -A workers.celery_app worker -Q reelforge:assemble -c 1 --loglevel=info
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://reelforge:reelforge@postgres:5432/reelforge
+      DATABASE_URL_SYNC: postgresql://reelforge:reelforge@postgres:5432/reelforge
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./workers:/app/workers
+      - ./shared:/app/shared
+      - ./uploads:/app/uploads
+
+  # ── Trend Pulse Service ──
+  trend-service:
+    build:
+      context: .
+      dockerfile: services/trend/Dockerfile
+    container_name: reelforge-trend-service
+    env_file: .env
+    environment:
+      DATABASE_URL_SYNC: postgresql://reelforge:reelforge@postgres:5432/reelforge
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./services/trend:/app/services/trend
+      - ./shared:/app/shared
+
+  # ── Notify Service ──
+  notify-service:
+    build:
+      context: .
+      dockerfile: services/notify/Dockerfile
+    container_name: reelforge-notify-service
+    env_file: .env
+    environment:
+      DATABASE_URL_SYNC: postgresql://reelforge:reelforge@postgres:5432/reelforge
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./services/notify:/app/services/notify
+      - ./shared:/app/shared
+
+  # ── Next.js Frontend ──
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    container_name: reelforge-web
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    depends_on:
+      - api
+    volumes:
+      - ./apps/web:/app
+      - /app/node_modules
+      - /app/.next
+
+volumes:
+  pgdata:
+  redisdata:

@@ -1,0 +1,13 @@
+{
+  "Common": {
+    "loading": "Chargement...",
+    "save": "Enregistrer",
+    "cancel": "Annuler"
+  },
+  "Navigation": {
+    "dashboard": "Tableau de bord",
+    "vault": "Coffre-fort",
+    "settings": "Paramètres",
+    "logout": "Déconnexion"
+  }
+}

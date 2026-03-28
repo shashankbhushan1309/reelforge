@@ -1,0 +1,13 @@
+{
+  "Common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel"
+  },
+  "Navigation": {
+    "dashboard": "Dashboard",
+    "vault": "Vault",
+    "settings": "Settings",
+    "logout": "Log Out"
+  }
+}
