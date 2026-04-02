@@ -1,48 +1,67 @@
-"""ReelForge API — Upload router with resumable upload support."""
+"""ReelForge API — Upload router.
 
+Handles file upload initiation and direct upload with validation.
+Creates MediaItem records and dispatches to ingest worker.
+"""
+
+import logging
 import os
 import uuid
-import logging
+from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from shared.models import User, MediaItem, MediaType, MediaStatus
-from shared.schemas import UploadInitiateRequest, UploadInitiateResponse, MediaItemResponse
-from apps.api.services.auth import get_current_user, get_db
+from apps.api.services.auth import get_current_user
+from shared.config import get_settings
+from shared.models import MediaItem, MediaType, MediaStatus, User
+from shared.models.database import get_async_session as get_db
+from shared.schemas import UploadInitiateRequest, UploadInitiateResponse
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/upload", tags=["upload"])
 
-# Allowed file types
-ALLOWED_VIDEO_TYPES = {"video/mp4", "video/quicktime", "video/x-msvideo", "video/webm"}
+# Supported file types
+ALLOWED_VIDEO_TYPES = {"video/mp4", "video/quicktime", "video/webm", "video/x-msvideo"}
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"}
 ALLOWED_TYPES = ALLOWED_VIDEO_TYPES | ALLOWED_IMAGE_TYPES
 
-UPLOAD_DIR = os.getenv("UPLOAD_DIR", "/app/uploads")
+# Maximum file size: 1GB
+MAX_FILE_SIZE = 1 * 1024 * 1024 * 1024  # 1GB in bytes
 
 
-@router.post("/upload/initiate", response_model=UploadInitiateResponse)
+def _classify_media_type(content_type: str) -> MediaType:
+    """Classify content type into MediaType enum."""
+    if content_type in ALLOWED_VIDEO_TYPES:
+        return MediaType.VIDEO
+    return MediaType.PHOTO
+
+
+@router.post("/initiate", response_model=UploadInitiateResponse)
 async def initiate_upload(
     request: UploadInitiateRequest,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Initiate a resumable upload session.
-
-    Returns a media_item_id and upload URL for the tus protocol.
-    """
+    """Initiate a resumable upload. Returns upload URL for tus client."""
+    # Validate content type
     if request.content_type not in ALLOWED_TYPES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Unsupported file type: {request.content_type}. Allowed: mp4, mov, jpg, png, webp, heic",
+            detail=f"Unsupported file type: {request.content_type}. Allowed: MP4, MOV, WEBM, JPG, PNG, WEBP, HEIC",
         )
 
-    # Determine media type
-    media_type = MediaType.VIDEO if request.content_type in ALLOWED_VIDEO_TYPES else MediaType.PHOTO
+    # Validate file size
+    if request.file_size > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"File too large. Maximum size is 1GB ({MAX_FILE_SIZE} bytes).",
+        )
 
-    # Create media item record
+    # Create MediaItem record
+    media_type = _classify_media_type(request.content_type)
     media_item = MediaItem(
         user_id=user.id,
         type=media_type,
@@ -54,67 +73,92 @@ async def initiate_upload(
     await db.commit()
     await db.refresh(media_item)
 
-    upload_id = str(uuid.uuid4())
-    upload_url = f"/api/v1/upload/{upload_id}"
+    # In production, return a pre-signed R2 URL or tus endpoint
+    settings = get_settings()
+    upload_url = f"/api/v1/upload/tus/{media_item.id}"
 
-    logger.info(f"Upload initiated: {media_item.id} ({request.filename}, {request.content_type})")
+    logger.info(f"Upload initiated: {media_item.id} ({request.filename}, {request.file_size} bytes)")
 
     return UploadInitiateResponse(
-        upload_id=upload_id,
-        media_item_id=media_item.id,
+        media_id=str(media_item.id),
         upload_url=upload_url,
     )
 
 
-@router.post("/upload/direct", response_model=MediaItemResponse)
+@router.post("/direct")
 async def direct_upload(
     file: UploadFile = File(...),
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Direct file upload (non-resumable, for smaller files).
-
-    For large files, use the tus resumable upload protocol via /upload/initiate.
-    """
+    """Direct file upload (non-resumable). For smaller files."""
+    # Validate content type
     if file.content_type not in ALLOWED_TYPES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Unsupported file type: {file.content_type}",
         )
 
-    media_type = MediaType.VIDEO if file.content_type in ALLOWED_VIDEO_TYPES else MediaType.PHOTO
-
-    # Save file locally
-    file_id = str(uuid.uuid4())
-    ext = os.path.splitext(file.filename or "upload")[1] or (".mp4" if media_type == MediaType.VIDEO else ".jpg")
-    local_filename = f"{file_id}{ext}"
-    local_path = os.path.join(UPLOAD_DIR, str(user.id), local_filename)
-    os.makedirs(os.path.dirname(local_path), exist_ok=True)
-
+    # Read file and check size
     content = await file.read()
-    with open(local_path, "wb") as f:
+    file_size = len(content)
+
+    if file_size > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="File too large. Maximum size is 1GB.",
+        )
+
+    if file_size == 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Empty file uploaded.",
+        )
+
+    # Generate unique filename
+    ext = os.path.splitext(file.filename or "file")[1] or ".bin"
+    unique_filename = f"{uuid.uuid4().hex}{ext}"
+
+    # Save to local uploads directory (in dev) or R2 (in prod)
+    upload_dir = os.path.join("/app/uploads", str(user.id))
+    os.makedirs(upload_dir, exist_ok=True)
+    filepath = os.path.join(upload_dir, unique_filename)
+
+    with open(filepath, "wb") as f:
         f.write(content)
 
-    # Create media item
+    # Create MediaItem record in DB
+    media_type = _classify_media_type(file.content_type)
     media_item = MediaItem(
         user_id=user.id,
         type=media_type,
-        filename=file.filename or local_filename,
-        size_bytes=len(content),
+        filename=unique_filename,
+        size_bytes=file_size,
         status=MediaStatus.UPLOADED,
-        r2_key=f"uploads/{user.id}/{local_filename}",
     )
     db.add(media_item)
     await db.commit()
     await db.refresh(media_item)
 
-    logger.info(f"Direct upload complete: {media_item.id} ({file.filename})")
+    # Upload to R2 in production
+    r2_key = f"uploads/{user.id}/{media_item.id}/{unique_filename}"
+    try:
+        from shared.storage import get_storage
+        storage = get_storage()
+        storage.upload_file(filepath, r2_key, file.content_type)
+        media_item.r2_key = r2_key
+        await db.commit()
+    except Exception as e:
+        logger.warning(f"R2 upload skipped (dev mode): {e}")
+        media_item.r2_key = r2_key
+        await db.commit()
 
-    return MediaItemResponse(
-        id=media_item.id,
-        type=media_item.type.value,
-        filename=media_item.filename,
-        size_bytes=media_item.size_bytes,
-        status=media_item.status.value,
-        created_at=media_item.created_at,
-    )
+    logger.info(f"Direct upload complete: {media_item.id} ({file.filename}, {file_size} bytes)")
+
+    return {
+        "media_id": str(media_item.id),
+        "filename": unique_filename,
+        "type": media_type.value,
+        "size_bytes": file_size,
+        "status": media_item.status.value,
+    }

@@ -3,8 +3,12 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAppStore } from "@/lib/store";
+import { uploadApi, jobsApi, reelsApi } from "@/lib/api";
+import { DNAVisualizer } from "@/components/editor/DNAVisualizer";
+import { ShotDirector } from "@/components/editor/ShotDirector";
+import { ReelPlayer } from "@/components/reel/ReelPlayer";
 
 const NICHES = [
   "Travel", "Food", "Fashion", "Fitness", "Lifestyle",
@@ -30,6 +34,43 @@ export default function DashboardPage() {
   const [currentStage, setCurrentStage] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [reelReady, setReelReady] = useState(false);
+  
+  const token = useAppStore((s) => s.token);
+  const [activeJobId, setActiveJobId] = useState<string | null>(null);
+  const [jobData, setJobData] = useState<any>(null);
+  const [reelData, setReelData] = useState<any>(null);
+
+  // Poll for job updates
+  useEffect(() => {
+    if (!activeJobId || !isGenerating) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const job = await jobsApi.get(activeJobId, token!);
+        setJobData(job);
+        setCurrentStage(job.status);
+        setProgress(job.progress);
+
+        if (job.status === "completed") {
+          setIsGenerating(false);
+          setReelReady(true);
+          setActiveJobId(null);
+          if (job.reel_id) {
+             const reel = await reelsApi.get(job.reel_id, token!);
+             setReelData(reel);
+          }
+        } else if (job.status === "failed") {
+          setIsGenerating(false);
+          setActiveJobId(null);
+          alert("Job failed. Please try again.");
+        }
+      } catch (err) {
+        console.error("Failed to poll job", err);
+      }
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [activeJobId, isGenerating, token]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -53,24 +94,51 @@ export default function DashboardPage() {
     setFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const simulateGeneration = () => {
+  const startGeneration = async () => {
+    if (!token) return alert("You must be logged in to create a reel");
+    if (files.length === 0) return alert("Please upload media first");
+    if (mode === "clone" && !inspirationFile) return alert("Please upload an inspiration file");
+
     setIsGenerating(true);
     setReelReady(false);
-    const stages = ["queued", "ingesting", "analysing", "generating_blueprint", "assembling", "completed"];
-    if (mode === "clone") stages.splice(3, 0, "extracting_dna");
+    setProgress(0);
+    setCurrentStage("queued");
 
-    let i = 0;
-    const interval = setInterval(() => {
-      if (i < stages.length) {
-        setCurrentStage(stages[i]);
-        setProgress(Math.round(((i + 1) / stages.length) * 100));
-        i++;
-      } else {
-        clearInterval(interval);
-        setIsGenerating(false);
-        setReelReady(true);
+    try {
+      // 1. Upload files
+      const mediaIds = [];
+      for (const file of files) {
+        const res = await uploadApi.direct(file, token);
+        mediaIds.push(res.media_id);
       }
-    }, 1500);
+
+      // 2. Upload inspiration if cloning
+      let inspirationMediaId = null;
+      if (mode === "clone" && inspirationFile) {
+        const res = await uploadApi.direct(inspirationFile, token);
+        inspirationMediaId = res.media_id;
+      }
+
+      // 3. Create job
+      let jobRes;
+      if (mode === "clone") {
+        jobRes = await jobsApi.createClone(
+          { inspiration_media_id: inspirationMediaId!, user_media_ids: mediaIds },
+          token
+        );
+      } else {
+        jobRes = await jobsApi.createAuto(
+          { media_ids: mediaIds, niche, region: "US" }, // Passing generic US for now, region usually comes from store
+          token
+        );
+      }
+
+      setActiveJobId(jobRes.id);
+    } catch (err: any) {
+      console.error(err);
+      alert(err.message || "Failed to start generation");
+      setIsGenerating(false);
+    }
   };
 
   return (
@@ -257,7 +325,7 @@ export default function DashboardPage() {
             className="text-center mb-8"
           >
             <button
-              onClick={simulateGeneration}
+              onClick={startGeneration}
               className="btn-primary text-lg !py-4 !px-12 glow-primary"
             >
               ✨ Generate Reel
@@ -318,6 +386,29 @@ export default function DashboardPage() {
               <p className="text-center text-sm text-[var(--color-text-muted)] mt-3">
                 {progress}% complete
               </p>
+              {/* DNA Visualizer */}
+              {jobData?.style_dna && currentStage === "extracting_dna" && (
+                 <div className="mt-8">
+                   <DNAVisualizer dna={jobData.style_dna} />
+                 </div>
+              )}
+
+              {/* Shot Director (Blueprint) */}
+              {jobData?.blueprint && (currentStage === "generating_blueprint" || currentStage === "assembling") && (
+                 <div className="mt-8 text-left">
+                   <ShotDirector 
+                      shots={jobData.blueprint.slots.map((s: any) => ({
+                         shot_number: s.slot_id,
+                         duration_seconds: s.end - s.start,
+                         title: `Shot ${s.slot_id} (${s.type})`,
+                         what_to_film: s.mood_role || "Video Segment",
+                         how_to_film_it: s.ken_burns ? "Subtle motion" : "Static shot",
+                         why_it_matters: "Builds momentum",
+                         common_mistake: "Unsteady camera"
+                      }))}
+                   />
+                 </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -338,13 +429,22 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* Preview placeholder */}
-              <div className="aspect-[9/16] max-w-xs mx-auto bg-[var(--color-bg-elevated)] rounded-2xl mb-6 flex items-center justify-center border border-[var(--color-border)]">
-                <div className="text-center">
-                  <span className="text-5xl block mb-3">🎬</span>
-                  <p className="text-sm text-[var(--color-text-muted)]">Reel Preview</p>
-                  <p className="text-xs text-[var(--color-text-muted)]">15s · 1080x1920</p>
-                </div>
+              {/* Preview Placeholder or Real Player */}
+              <div className="aspect-[9/16] max-w-xs mx-auto bg-black rounded-2xl mb-6 flex items-center justify-center border border-[var(--color-border)] overflow-hidden">
+                {reelData?.r2_key ? (
+                  <ReelPlayer 
+                    src={`/api/v1/reels/${reelData.id}/stream`} 
+                    autoPlay={true}
+                  />
+                ) : (
+                  <div className="text-center">
+                    <span className="text-5xl block mb-3">🎬</span>
+                    <p className="text-sm text-[var(--color-text-muted)]">Reel Preview</p>
+                    <p className="text-xs text-[var(--color-text-muted)]">
+                      {reelData?.duration_ms ? `${Math.round(reelData.duration_ms / 1000)}s` : '15s'} · 1080x1920
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Action buttons */}
@@ -368,12 +468,19 @@ export default function DashboardPage() {
               </div>
 
               {/* Generated caption */}
-              <div className="mt-6 p-4 rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)]">
-                <h4 className="text-sm font-medium mb-2">Generated Caption</h4>
-                <p className="text-sm text-[var(--color-text-secondary)]">
-                  Check out this amazing reel! ✨ Created with ReelForge AI — the world&apos;s first zero-edit video director. #viral #trending #reels #content #creator
-                </p>
-              </div>
+              {reelData?.captions && (
+                <div className="mt-6 p-4 rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)]">
+                  <h4 className="text-sm font-medium mb-2">Generated Caption</h4>
+                  <p className="text-sm text-[var(--color-text-secondary)] whitespace-pre-wrap">
+                    {reelData.captions.text}
+                  </p>
+                  {reelData.captions.hashtags && (
+                    <p className="text-sm text-[var(--color-primary-light)] mt-2">
+                       {reelData.captions.hashtags.join(' ')}
+                    </p>
+                  )}
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

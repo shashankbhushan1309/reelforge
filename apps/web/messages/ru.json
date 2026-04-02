@@ -1,1 +1,13 @@
-{}
+{
+  "Common": {
+    "loading": "Загрузка...",
+    "save": "Сохранить",
+    "cancel": "Отмена"
+  },
+  "Navigation": {
+    "dashboard": "Панель",
+    "vault": "Хранилище",
+    "settings": "Настройки",
+    "logout": "Выйти"
+  }
+}

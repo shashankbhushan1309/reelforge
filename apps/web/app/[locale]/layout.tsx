@@ -14,13 +14,20 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({
   children,
+  params
 }: {
   children: React.ReactNode;
+  params: Promise<{ locale: string }>
 }) {
+  const { locale } = await params;
+  const messages = await getMessages();
+
   return (
-    <html lang="en" className={`${inter.variable} ${outfit.variable}`}>
+    <html lang={locale} className={`${inter.variable} ${outfit.variable}`}>
       <body className="min-h-screen bg-[var(--color-bg-dark)] text-[var(--color-text-primary)] antialiased">
-        {children}
+        <NextIntlClientProvider messages={messages}>
+          {children}
+        </NextIntlClientProvider>
       </body>
     </html>
   );

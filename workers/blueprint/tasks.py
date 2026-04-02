@@ -233,10 +233,29 @@ def generate_blueprint(self, job_id: str):
         style_dna = job.style_dna or {}
         trend_profile = {}
 
-        if job.mode == JobMode.AUTO and job.trend_profile_id:
-            tp = session.execute(
-                select(TrendProfile).where(TrendProfile.id == job.trend_profile_id)
-            ).scalar_one_or_none()
+        if job.mode == JobMode.AUTO:
+            # Try specified trend_profile_id, else auto-select by niche/region
+            tp = None
+            if job.trend_profile_id:
+                tp = session.execute(
+                    select(TrendProfile).where(TrendProfile.id == job.trend_profile_id)
+                ).scalar_one_or_none()
+
+            if not tp and job.niche:
+                # Auto-select highest virality trend for this niche/region
+                query = (
+                    select(TrendProfile)
+                    .where(
+                        TrendProfile.niche == job.niche,
+                        TrendProfile.is_active == True,
+                    )
+                    .order_by(TrendProfile.virality_score.desc().nulls_last())
+                    .limit(1)
+                )
+                if job.region:
+                    query = query.where(TrendProfile.region == job.region)
+                tp = session.execute(query).scalar_one_or_none()
+
             if tp:
                 trend_profile = {
                     "niche": tp.niche,
@@ -245,6 +264,9 @@ def generate_blueprint(self, job_id: str):
                     "energy_level": tp.energy_level,
                     "color_palette": tp.color_palette,
                 }
+                # Save the selected trend profile back to job
+                job.trend_profile_id = tp.id
+                session.commit()
 
         # Call Claude for blueprint
         prompt = BLUEPRINT_PROMPT.format(

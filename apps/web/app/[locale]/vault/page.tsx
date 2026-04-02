@@ -5,16 +5,9 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useState } from "react";
 
-const MOCK_MEDIA = [
-  { id: "1", type: "video", filename: "beach_sunset.mp4", duration_ms: 12000, size_bytes: 4200000, score: 87, mood: "calm", status: "ready" },
-  { id: "2", type: "photo", filename: "portrait_golden.jpg", duration_ms: null, size_bytes: 2100000, score: 92, mood: "joyful", status: "ready" },
-  { id: "3", type: "video", filename: "city_walk.mp4", duration_ms: 18000, size_bytes: 6800000, score: 78, mood: "energetic", status: "ready" },
-  { id: "4", type: "video", filename: "cooking_clip.mp4", duration_ms: 25000, size_bytes: 9200000, score: 85, mood: "calm", status: "ready" },
-  { id: "5", type: "photo", filename: "mountain_view.jpg", duration_ms: null, size_bytes: 3500000, score: 95, mood: "dramatic", status: "ready" },
-  { id: "6", type: "video", filename: "dance_routine.mp4", duration_ms: 30000, size_bytes: 12000000, score: 71, mood: "energetic", status: "ready" },
-  { id: "7", type: "photo", filename: "food_overhead.jpg", duration_ms: null, size_bytes: 1800000, score: 88, mood: "joyful", status: "ready" },
-  { id: "8", type: "video", filename: "travel_montage.mp4", duration_ms: 45000, size_bytes: 18000000, score: 82, mood: "powerful", status: "ready" },
-];
+import { useQuery } from "@tanstack/react-query";
+import { useAppStore } from "@/lib/store";
+import { vaultApi } from "@/lib/api";
 
 function ScoreDot({ score }: { score: number }) {
   const color = score >= 85 ? "var(--color-success)" : score >= 70 ? "var(--color-warning)" : "var(--color-error)";
@@ -29,10 +22,25 @@ function ScoreDot({ score }: { score: number }) {
 export default function VaultPage() {
   const [filter, setFilter] = useState<"all" | "video" | "photo">("all");
   const [sort, setSort] = useState("score");
+  
+  const token = useAppStore((state) => state.token);
 
-  const filtered = MOCK_MEDIA
-    .filter((m) => filter === "all" || m.type === filter)
-    .sort((a, b) => sort === "score" ? b.score - a.score : b.size_bytes - a.size_bytes);
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["vault", filter, sort],
+    queryFn: () => vaultApi.list({ type: filter === "all" ? undefined : filter }, token!),
+    enabled: !!token,
+  });
+
+  const mediaList = data?.items || [];
+  
+  const filtered = mediaList.sort((a: any, b: any) => {
+    if (sort === "score") {
+      const aScore = a.segments?.[0]?.composite_score || 0;
+      const bScore = b.segments?.[0]?.composite_score || 0;
+      return bScore - aScore;
+    }
+    return (b.size_bytes || 0) - (a.size_bytes || 0);
+  });
 
   return (
     <div className="min-h-screen bg-[var(--color-bg-dark)]">
@@ -55,7 +63,7 @@ export default function VaultPage() {
           <div>
             <h1 className="text-2xl font-bold font-[var(--font-display)]">Media Vault</h1>
             <p className="text-sm text-[var(--color-text-secondary)]">
-              {MOCK_MEDIA.length} items · Scored & analysed
+              {mediaList.length} items · Scored & analysed
             </p>
           </div>
           <Link href="/dashboard" className="btn-primary !text-sm !py-2">
@@ -90,7 +98,7 @@ export default function VaultPage() {
 
         {/* Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {filtered.map((item, i) => (
+          {filtered.map((item: any, i: number) => (
             <motion.div
               key={item.id}
               className="glass-card overflow-hidden group cursor-pointer"
@@ -113,12 +121,12 @@ export default function VaultPage() {
                 <p className="text-sm font-medium truncate">{item.filename}</p>
                 <div className="flex items-center justify-between mt-1">
                   <span className="text-xs text-[var(--color-text-muted)]">
-                    {(item.size_bytes / 1024 / 1024).toFixed(1)} MB
+                    {((item.size_bytes || 0) / 1024 / 1024).toFixed(1)} MB
                   </span>
-                  <ScoreDot score={item.score} />
+                  <ScoreDot score={item.segments?.[0]?.composite_score || 85} />
                 </div>
                 <span className="inline-block mt-1.5 text-xs px-2 py-0.5 rounded-full bg-[var(--color-bg-elevated)] text-[var(--color-text-muted)]">
-                  {item.mood}
+                  {item.mood_tags?.[0] || 'neutral'}
                 </span>
               </div>
             </motion.div>

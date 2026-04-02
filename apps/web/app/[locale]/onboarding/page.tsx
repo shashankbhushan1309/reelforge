@@ -31,15 +31,30 @@ const REGIONS = [
   { code: "ID", name: "Indonesia", flag: "🇮🇩" },
 ];
 
+import { useRouter } from "next/navigation";
+import { useAppStore } from "@/lib/store";
+
 export default function OnboardingPage() {
   const [step, setStep] = useState(0);
   const [selectedNiches, setSelectedNiches] = useState<string[]>([]);
   const [selectedRegion, setSelectedRegion] = useState("US");
+  
+  const router = useRouter();
+  const setNiche = useAppStore((s) => s.setNiche);
+  const setRegion = useAppStore((s) => s.setRegion);
 
   const toggleNiche = (niche: string) => {
     setSelectedNiches((prev) =>
       prev.includes(niche) ? prev.filter((n) => n !== niche) : [...prev, niche]
     );
+  };
+
+  const handleComplete = () => {
+    if (selectedNiches.length > 0) {
+      setNiche(selectedNiches[0]);
+    }
+    setRegion(selectedRegion);
+    router.push("/dashboard");
   };
 
   return (
@@ -94,9 +109,9 @@ export default function OnboardingPage() {
                   </button>
                 ))}
               </div>
-              <Link href="/dashboard" className="btn-primary w-full block text-center">
+              <button onClick={handleComplete} className="btn-primary w-full block text-center">
                 Start Creating ✨
-              </Link>
+              </button>
             </motion.div>
           )}
         </AnimatePresence>

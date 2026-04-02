@@ -1,1 +1,13 @@
-{}
+{
+  "Common": {
+    "loading": "جار التحميل...",
+    "save": "حفظ",
+    "cancel": "إلغاء"
+  },
+  "Navigation": {
+    "dashboard": "لوحة القيادة",
+    "vault": "قبو",
+    "settings": "إعدادات",
+    "logout": "تسجيل خروج"
+  }
+}

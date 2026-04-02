@@ -5,15 +5,54 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useState } from "react";
 
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAppStore } from "@/lib/store";
+import { authApi } from "@/lib/api";
+
 const TIERS = [
-  { name: "Free", price: "$0", current: true, features: ["3 reels/month", "720p", "Watermark"] },
-  { name: "Creator", price: "$12/mo", current: false, features: ["30 reels/month", "1080p", "No watermark", "Clone Mode"] },
-  { name: "Pro", price: "$29/mo", current: false, features: ["Unlimited reels", "4K", "API access", "50GB vault"] },
-  { name: "Studio", price: "$99/mo", current: false, features: ["Team seats", "White-label", "Priority support"] },
+  { name: "Free", price: "$0", internalName: "free", features: ["3 reels/month", "720p", "Watermark"] },
+  { name: "Creator", price: "$12/mo", internalName: "creator", features: ["30 reels/month", "1080p", "No watermark", "Clone Mode"] },
+  { name: "Pro", price: "$29/mo", internalName: "pro", features: ["Unlimited reels", "4K", "API access", "50GB vault"] },
+  { name: "Studio", price: "$99/mo", internalName: "studio", features: ["Team seats", "White-label", "Priority support"] },
 ];
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("billing");
+  
+  const token = useAppStore((s) => s.token);
+  const queryClient = useQueryClient();
+
+  const { data: user } = useQuery({
+    queryKey: ["user"],
+    queryFn: () => authApi.me(token!),
+    enabled: !!token,
+  });
+
+  const [name, setName] = useState("");
+  const [timezone, setTimezone] = useState("UTC");
+  const [locale, setLocale] = useState("en");
+
+  // Sync state when user loads
+  if (user && !name && user.name) {
+    setName(user.name);
+    setTimezone(user.timezone || "UTC");
+    setLocale(user.locale || "en");
+  }
+
+  const updateMutation = useMutation({
+    mutationFn: (data: any) => authApi.updateProfile(data, token!),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user"] });
+      alert("Settings saved successfully!");
+    },
+    onError: (err) => {
+      alert("Failed to save settings: " + err.message);
+    }
+  });
+
+  const handleSave = () => {
+    updateMutation.mutate({ name, timezone, locale });
+  };
 
   return (
     <div className="min-h-screen bg-[var(--color-bg-dark)]">
@@ -54,9 +93,11 @@ export default function SettingsPage() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <div className="glass-card p-6 mb-6">
               <h2 className="text-lg font-semibold mb-1">Current Plan</h2>
-              <p className="text-sm text-[var(--color-text-secondary)] mb-4">Free · 3 reels remaining</p>
+              <p className="text-sm text-[var(--color-text-secondary)] mb-4">
+                {user?.tier || "Loading..."} · {user?.credits || 0} reels remaining
+              </p>
               <div className="flex items-center gap-3">
-                <div className="text-3xl font-bold">3</div>
+                <div className="text-3xl font-bold">{user?.credits || 0}</div>
                 <div>
                   <p className="text-sm font-medium">Credits Remaining</p>
                   <p className="text-xs text-[var(--color-text-muted)]">Resets monthly</p>
@@ -66,9 +107,11 @@ export default function SettingsPage() {
 
             <h3 className="text-lg font-semibold mb-4">Upgrade Your Plan</h3>
             <div className="grid md:grid-cols-4 gap-4">
-              {TIERS.map((tier) => (
-                <div key={tier.name} className={`glass-card p-5 ${tier.current ? "border-[var(--color-primary)] border-2" : ""}`}>
-                  {tier.current && <span className="text-xs text-[var(--color-primary-light)] font-semibold">CURRENT</span>}
+              {TIERS.map((tier) => {
+                const isCurrent = user?.tier === tier.internalName;
+                return (
+                <div key={tier.name} className={`glass-card p-5 ${isCurrent ? "border-[var(--color-primary)] border-2" : ""}`}>
+                  {isCurrent && <span className="text-xs text-[var(--color-primary-light)] font-semibold">CURRENT</span>}
                   <h4 className="text-lg font-bold mt-1">{tier.name}</h4>
                   <p className="text-xl font-bold mb-3">{tier.price}</p>
                   <ul className="space-y-1 mb-4">
@@ -76,11 +119,12 @@ export default function SettingsPage() {
                       <li key={f} className="text-xs text-[var(--color-text-secondary)]">✓ {f}</li>
                     ))}
                   </ul>
-                  {!tier.current && (
+                  {!isCurrent && (
                     <button className="btn-primary w-full !text-sm !py-2">Upgrade</button>
                   )}
                 </div>
-              ))}
+                );
+              })}
             </div>
           </motion.div>
         )}
@@ -91,23 +135,25 @@ export default function SettingsPage() {
             <div className="glass-card p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1.5">Display Name</label>
-                <input type="text" defaultValue="User" className="w-full px-4 py-3 rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)] text-white focus:outline-none focus:border-[var(--color-primary)] text-sm" />
+                <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)] text-white focus:outline-none focus:border-[var(--color-primary)] text-sm" />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1.5">Email</label>
-                <input type="email" defaultValue="user@example.com" className="w-full px-4 py-3 rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)] text-white focus:outline-none focus:border-[var(--color-primary)] text-sm" disabled />
+                <input type="email" value={user?.email || ""} className="w-full px-4 py-3 rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)] text-white focus:outline-none focus:border-[var(--color-primary)] text-sm" disabled />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1.5">Timezone</label>
-                <select className="w-full px-4 py-3 rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)] text-white text-sm">
-                  <option>UTC</option>
-                  <option>America/New_York</option>
-                  <option>Europe/London</option>
-                  <option>Asia/Kolkata</option>
-                  <option>Asia/Tokyo</option>
+                <select value={timezone} onChange={(e) => setTimezone(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)] text-white text-sm">
+                  <option value="UTC">UTC</option>
+                  <option value="America/New_York">America/New_York</option>
+                  <option value="Europe/London">Europe/London</option>
+                  <option value="Asia/Kolkata">Asia/Kolkata</option>
+                  <option value="Asia/Tokyo">Asia/Tokyo</option>
                 </select>
               </div>
-              <button className="btn-primary !text-sm">Save Changes</button>
+              <button disabled={updateMutation.isPending} onClick={handleSave} className="btn-primary !text-sm">
+                {updateMutation.isPending ? "Saving..." : "Save Changes"}
+              </button>
 
               <hr className="border-[var(--color-border)] my-6" />
 
@@ -150,18 +196,15 @@ export default function SettingsPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1.5">Language</label>
-                <select className="w-full px-4 py-3 rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)] text-white text-sm">
-                  <option>English</option>
-                  <option>Hindi</option>
-                  <option>Portuguese</option>
-                  <option>Spanish</option>
-                  <option>French</option>
-                  <option>German</option>
-                  <option>Arabic</option>
-                  <option>Japanese</option>
+                <select value={locale} onChange={(e) => setLocale(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)] text-white text-sm">
+                  <option value="en">English</option>
+                  <option value="es">Spanish</option>
+                  <option value="fr">French</option>
                 </select>
               </div>
-              <button className="btn-primary !text-sm">Save Preferences</button>
+              <button disabled={updateMutation.isPending} onClick={handleSave} className="btn-primary !text-sm">
+                {updateMutation.isPending ? "Saving..." : "Save Preferences"}
+              </button>
             </div>
           </motion.div>
         )}

@@ -1,1 +1,13 @@
-{}
+{
+  "Common": {
+    "loading": "加载中...",
+    "save": "保存",
+    "cancel": "取消"
+  },
+  "Navigation": {
+    "dashboard": "仪表板",
+    "vault": "金库",
+    "settings": "设置",
+    "logout": "登出"
+  }
+}

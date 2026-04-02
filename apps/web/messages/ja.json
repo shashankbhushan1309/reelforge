@@ -1,1 +1,13 @@
-{}
+{
+  "Common": {
+    "loading": "読み込み中...",
+    "save": "保存",
+    "cancel": "キャンセル"
+  },
+  "Navigation": {
+    "dashboard": "ダッシュボード",
+    "vault": "ボルト",
+    "settings": "設定",
+    "logout": "ログアウト"
+  }
+}

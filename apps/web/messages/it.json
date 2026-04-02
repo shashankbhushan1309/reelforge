@@ -1,1 +1,13 @@
-{}
+{
+  "Common": {
+    "loading": "Caricamento...",
+    "save": "Salva",
+    "cancel": "Annulla"
+  },
+  "Navigation": {
+    "dashboard": "Dashboard",
+    "vault": "Cavo",
+    "settings": "Impostazioni",
+    "logout": "Esci"
+  }
+}

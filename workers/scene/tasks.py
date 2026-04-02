@@ -97,22 +97,26 @@ def detect_scenes(self, job_id: str, media_id: str):
             session.commit()
 
         # Get video file path
-        video_path = os.path.join("/app/uploads", str(media_item.user_id), media_item.filename)
+        local_path = os.path.join("/app/uploads", str(media_item.user_id), media_item.filename)
 
-        # If file doesn't exist locally, download from R2
-        if not os.path.exists(video_path) and media_item.r2_key:
-            with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as tmp:
-                video_path = tmp.name
+        with tempfile.TemporaryDirectory() as tmpdir:
+            if os.path.exists(local_path):
+                video_path = local_path
+            elif media_item.r2_key:
+                video_path = os.path.join(tmpdir, "input.mp4")
                 try:
                     from shared.storage import get_storage
                     get_storage().download_file(media_item.r2_key, video_path)
                 except Exception as e:
                     logger.warning(f"Could not download from R2: {e}")
                     return
+            else:
+                logger.warning(f"File not found locally or in R2 for {media_id}")
+                return
 
-        # Run scene detection
-        segments = run_scene_detection(video_path)
-        logger.info(f"[Scene] Found {len(segments)} segments in media {media_id}")
+            # Run scene detection
+            segments = run_scene_detection(video_path)
+            logger.info(f"[Scene] Found {len(segments)} segments in media {media_id}")
 
         # Store segments in database
         for seg in segments:

@@ -11,6 +11,8 @@ from uuid import uuid4
 
 from apscheduler.schedulers.blocking import BlockingScheduler
 
+from sqlalchemy import select
+
 from shared.config import get_settings
 from shared.models import TrendProfile
 from shared.models.database import SyncSessionLocal

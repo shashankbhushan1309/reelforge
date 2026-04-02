@@ -9,12 +9,15 @@ GPU-enabled worker that renders the final reel using ffmpeg:
 - Audio mixing with ducking
 - Multi-format export (9:16, 1:1, 16:9)
 - Quality validation before delivery
+- Thumbnail generation
+- Notification dispatch on completion
 """
 
 import json
 import logging
 import os
 import secrets
+import shutil
 import subprocess
 import tempfile
 from uuid import UUID
@@ -28,7 +31,8 @@ from shared.models.database import SyncSessionLocal
 
 logger = logging.getLogger(__name__)
 
-# LUT file mapping
+# LUT file mapping — stored in /app/luts/ directory
+LUT_DIR = os.environ.get("LUT_DIR", "/app/luts")
 LUT_MAP = {
     "moody": "moody.cube",
     "warm_cinematic": "warm_cinematic.cube",
@@ -82,7 +86,6 @@ def create_ken_burns(image_path: str, output_path: str, duration: float,
     fps = 30
     total_frames = int(duration * fps)
 
-    # Zoompan parameters based on direction
     zoom_expr = f"zoom+{(end_scale - start_scale) / total_frames}"
 
     if direction == "up":
@@ -172,17 +175,44 @@ def apply_transition(clip1_path: str, clip2_path: str, output_path: str,
         return False
 
 
+def apply_lut(input_path: str, output_path: str, color_grade: str) -> bool:
+    """Apply LUT colour grading to video."""
+    lut_file = LUT_MAP.get(color_grade)
+    if not lut_file:
+        # No LUT needed — just copy
+        shutil.copy2(input_path, output_path)
+        return True
+
+    lut_path = os.path.join(LUT_DIR, lut_file)
+    if not os.path.exists(lut_path):
+        logger.warning(f"LUT file not found: {lut_path}, skipping color grading")
+        shutil.copy2(input_path, output_path)
+        return True
+
+    cmd = [
+        "ffmpeg", "-y", "-i", input_path,
+        "-vf", f"lut3d='{lut_path}'",
+        "-c:v", "libx264", "-preset", "fast", "-crf", "20",
+        "-c:a", "copy",
+        output_path,
+    ]
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+        return result.returncode == 0
+    except Exception:
+        shutil.copy2(input_path, output_path)
+        return True
+
+
 def add_text_overlay(input_path: str, output_path: str, overlays: list) -> bool:
     """Add text overlays to video using drawtext filter."""
     if not overlays:
-        # No overlays, just copy
-        import shutil
         shutil.copy2(input_path, output_path)
         return True
 
     filter_parts = []
     for overlay in overlays:
-        text = overlay.get("text", "").replace("'", "\\'")
+        text = overlay.get("text", "").replace("'", "\\'").replace(":", "\\:")
         start_time = overlay.get("time", 0)
         duration = overlay.get("duration", 1.5)
         style = overlay.get("style", "mid")
@@ -224,13 +254,30 @@ def add_text_overlay(input_path: str, output_path: str, overlays: list) -> bool:
 def mix_audio(video_path: str, music_path: str, output_path: str,
               duck_at: list = None, music_volume: float = 0.15) -> bool:
     """Mix background music with video audio, with ducking capability."""
-    # Simple audio mixing
+    if duck_at and len(duck_at) > 0:
+        # Build ducking volume expression — reduce music volume at speech points
+        duck_parts = []
+        for ts in duck_at:
+            # Duck music to 20% for 2 seconds around each speech timestamp
+            duck_parts.append(f"between(t,{max(0, ts - 0.5)},{ts + 1.5})")
+        duck_expr = "+".join(duck_parts)
+        volume_expr = f"volume='{music_volume}*if({duck_expr},0.2,1)'"
+
+        filter_complex = (
+            f"[1:a]{volume_expr}[music];"
+            f"[0:a][music]amix=inputs=2:duration=first[aout]"
+        )
+    else:
+        filter_complex = (
+            f"[1:a]volume={music_volume}[music];"
+            f"[0:a][music]amix=inputs=2:duration=first[aout]"
+        )
+
     cmd = [
         "ffmpeg", "-y",
         "-i", video_path,
         "-i", music_path,
-        "-filter_complex",
-        f"[1:a]volume={music_volume}[music];[0:a][music]amix=inputs=2:duration=first[aout]",
+        "-filter_complex", filter_complex,
         "-map", "0:v", "-map", "[aout]",
         "-c:v", "copy",
         "-c:a", "aac", "-b:a", "192k",
@@ -243,11 +290,29 @@ def mix_audio(video_path: str, music_path: str, output_path: str,
         return False
 
 
+def generate_thumbnail(video_path: str, output_path: str, timestamp: float = 1.0) -> bool:
+    """Generate thumbnail from video at specified timestamp."""
+    cmd = [
+        "ffmpeg", "-y",
+        "-ss", str(timestamp),
+        "-i", video_path,
+        "-vframes", "1",
+        "-vf", "scale=540:960",
+        "-q:v", "2",
+        output_path,
+    ]
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+        return result.returncode == 0 and os.path.exists(output_path)
+    except Exception:
+        return False
+
+
 def create_square_variant(input_path: str, output_path: str) -> bool:
     """Create 1:1 square variant for Instagram feed."""
     cmd = [
         "ffmpeg", "-y", "-i", input_path,
-        "-vf", "crop=min(iw\\,ih):min(iw\\,ih):(iw-min(iw\\,ih))/2:(ih-min(iw\\,ih))/2,scale=1080:1080",
+        "-vf", "crop='min(iw,ih)':'min(iw,ih)':'(iw-min(iw,ih))/2':'(ih-min(iw,ih))/2',scale=1080:1080",
         "-c:v", "libx264", "-preset", "fast", "-crf", "20",
         "-c:a", "copy",
         output_path,
@@ -309,6 +374,26 @@ def validate_quality(video_path: str, blueprint: dict) -> dict:
     return checks
 
 
+def _get_source_path(session, segment, media_item) -> str:
+    """Get source file path — try local first, then download from R2."""
+    local_path = os.path.join("/app/uploads", str(media_item.user_id), media_item.filename)
+    if os.path.exists(local_path):
+        return local_path
+
+    # Download from R2
+    if media_item.r2_key:
+        try:
+            from shared.storage import get_storage
+            import tempfile
+            tmp = tempfile.NamedTemporaryFile(suffix=os.path.splitext(media_item.filename)[1], delete=False)
+            get_storage().download_file(media_item.r2_key, tmp.name)
+            return tmp.name
+        except Exception as e:
+            logger.warning(f"R2 download failed: {e}")
+
+    return local_path  # Return path even if doesn't exist (will fail gracefully)
+
+
 @shared_task(name="workers.assembly.tasks.assemble_reel", bind=True, max_retries=2)
 def assemble_reel(self, job_id: str):
     """Assemble final reel from blueprint: extract clips, apply effects, render output."""
@@ -340,6 +425,7 @@ def assemble_reel(self, job_id: str):
 
         with tempfile.TemporaryDirectory() as tmpdir:
             clip_paths = []
+            slot_transitions = []
 
             for slot in slots:
                 slot_output = os.path.join(tmpdir, f"slot_{slot['slot_id']}.mp4")
@@ -360,7 +446,7 @@ def assemble_reel(self, job_id: str):
                 if not media_item:
                     continue
 
-                source_path = os.path.join("/app/uploads", str(media_item.user_id), media_item.filename)
+                source_path = _get_source_path(session, segment, media_item)
 
                 if not os.path.exists(source_path):
                     logger.warning(f"Source file not found: {source_path}")
@@ -390,6 +476,7 @@ def assemble_reel(self, job_id: str):
 
                 if success and os.path.exists(slot_output):
                     clip_paths.append(slot_output)
+                    slot_transitions.append(slot.get("transition_out", "hard_cut"))
                 else:
                     logger.warning(f"Failed to process slot {slot['slot_id']}")
 
@@ -400,32 +487,42 @@ def assemble_reel(self, job_id: str):
                 session.commit()
                 return
 
-            # Concatenate all clips with transitions
+            # ── Concatenate clips with per-slot transitions ──
             if len(clip_paths) == 1:
                 assembled_path = clip_paths[0]
             else:
-                # Build concat file
-                concat_file = os.path.join(tmpdir, "concat.txt")
-                with open(concat_file, "w") as f:
-                    for path in clip_paths:
-                        f.write(f"file '{path}'\n")
+                # Apply transitions pair by pair
+                current_path = clip_paths[0]
+                for i in range(1, len(clip_paths)):
+                    transition_type = slot_transitions[i - 1] if i - 1 < len(slot_transitions) else "hard_cut"
+                    next_output = os.path.join(tmpdir, f"trans_{i}.mp4")
 
-                assembled_path = os.path.join(tmpdir, "assembled.mp4")
-                cmd = [
-                    "ffmpeg", "-y", "-f", "concat", "-safe", "0",
-                    "-i", concat_file,
-                    "-c:v", "libx264", "-preset", "slow", "-crf", "18",
-                    "-vf", "scale=1080:1920",
-                    "-r", "30",
-                    assembled_path,
-                ]
-                subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+                    if not apply_transition(current_path, clip_paths[i], next_output, transition_type):
+                        # Fallback: simple concat if transition fails
+                        concat_file = os.path.join(tmpdir, f"concat_{i}.txt")
+                        with open(concat_file, "w") as f:
+                            f.write(f"file '{current_path}'\n")
+                            f.write(f"file '{clip_paths[i]}'\n")
+                        subprocess.run([
+                            "ffmpeg", "-y", "-f", "concat", "-safe", "0",
+                            "-i", concat_file, "-c", "copy", next_output,
+                        ], capture_output=True, text=True, timeout=60)
 
-                if not os.path.exists(assembled_path):
-                    assembled_path = clip_paths[0]
+                    if os.path.exists(next_output):
+                        current_path = next_output
+                    else:
+                        logger.warning(f"Transition {i} failed, keeping current assembly")
 
-            # Apply text overlays
-            text_overlays = blueprint.get("text_overlays", [])
+                assembled_path = current_path
+
+            # ── Apply LUT colour grading ──
+            color_grade = blueprint.get("color_grade", "natural")
+            graded_path = os.path.join(tmpdir, "graded.mp4")
+            if apply_lut(assembled_path, graded_path, color_grade):
+                assembled_path = graded_path
+
+            # ── Apply text overlays ──
+            text_overlays = list(blueprint.get("text_overlays", []))
             if job.captions:
                 # Add hook text
                 if job.captions.get("hook_text"):
@@ -450,7 +547,7 @@ def assemble_reel(self, job_id: str):
                 if add_text_overlay(assembled_path, text_output, text_overlays):
                     assembled_path = text_output
 
-            # Final render with quality settings
+            # ── Final render with quality settings ──
             final_path = os.path.join(tmpdir, "final_9x16.mp4")
             cmd = [
                 "ffmpeg", "-y", "-i", assembled_path,
@@ -466,17 +563,22 @@ def assemble_reel(self, job_id: str):
             if not os.path.exists(final_path):
                 final_path = assembled_path
 
-            # Quality validation
+            # ── Quality validation ──
             quality = validate_quality(final_path, blueprint)
             logger.info(f"[Assembly] Quality check: {quality}")
 
-            # Generate format variants
+            # ── Generate thumbnail ──
+            thumb_path = os.path.join(tmpdir, "thumbnail.jpg")
+            # Capture thumbnail at 1 second (usually the hook shot)
+            generate_thumbnail(final_path, thumb_path, timestamp=1.0)
+
+            # ── Generate format variants ──
             square_path = os.path.join(tmpdir, "final_1x1.mp4")
             landscape_path = os.path.join(tmpdir, "final_16x9.mp4")
             create_square_variant(final_path, square_path)
             create_landscape_variant(final_path, landscape_path)
 
-            # Upload to R2
+            # ── Upload to R2 ──
             r2_key_9x16 = f"reels/{job.user_id}/{job.id}/reel_9x16.mp4"
             r2_key_1x1 = f"reels/{job.user_id}/{job.id}/reel_1x1.mp4"
             r2_key_16x9 = f"reels/{job.user_id}/{job.id}/reel_16x9.mp4"
@@ -490,10 +592,12 @@ def assemble_reel(self, job_id: str):
                     storage.upload_file(square_path, r2_key_1x1, "video/mp4")
                 if os.path.exists(landscape_path):
                     storage.upload_file(landscape_path, r2_key_16x9, "video/mp4")
+                if os.path.exists(thumb_path):
+                    storage.upload_file(thumb_path, thumb_r2_key, "image/jpeg")
             except Exception as e:
                 logger.warning(f"R2 upload skipped (dev mode): {e}")
 
-            # Get final duration
+            # ── Get final duration ──
             try:
                 probe = subprocess.run(
                     ["ffprobe", "-v", "quiet", "-print_format", "json", "-show_format", final_path],
@@ -503,7 +607,7 @@ def assemble_reel(self, job_id: str):
             except Exception:
                 duration_ms = int(blueprint.get("total_duration", 15) * 1000)
 
-            # Create Reel record
+            # ── Create Reel record ──
             reel = Reel(
                 job_id=job.id,
                 user_id=job.user_id,
@@ -517,10 +621,17 @@ def assemble_reel(self, job_id: str):
             )
             session.add(reel)
 
-            # Update job status
+            # ── Update job status ──
             job.status = JobStatus.COMPLETED
             job.progress = 100
             session.commit()
+
+            # ── Send notification ──
+            try:
+                from services.notify.main import send_notification
+                send_notification(str(job.id), "reel_ready")
+            except Exception as e:
+                logger.warning(f"Notification dispatch failed: {e}")
 
             logger.info(f"[Assembly] ✅ Reel assembled for job {job_id}, duration: {duration_ms}ms")
 

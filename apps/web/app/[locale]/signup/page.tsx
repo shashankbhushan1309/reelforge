@@ -5,19 +5,52 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useState } from "react";
 
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase";
+import { useAppStore } from "@/lib/store";
+
 export default function SignupPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const router = useRouter();
+  const setToken = useAppStore((state) => state.setToken);
+  const setUser = useAppStore((state) => state.setUser);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
+    setError(null);
+    
+    const supabase = createClient();
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: name,
+        },
+      },
+    });
+
+    if (error) {
+      setError(error.message);
       setLoading(false);
-      window.location.href = "/onboarding";
-    }, 1000);
+      return;
+    }
+
+    if (data.session) {
+      setToken(data.session.access_token);
+      setUser(data.user);
+      router.push("/onboarding");
+    } else {
+      // Email verification required
+      setError("Please check your email to verify your account.");
+      setLoading(false);
+    }
   };
 
   return (

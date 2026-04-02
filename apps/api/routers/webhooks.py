@@ -1,105 +1,204 @@
-"""ReelForge API — Webhooks router (Stripe & External endpoints)."""
+"""ReelForge API — Stripe webhooks + external notifications."""
 
 import logging
-import stripe
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
-from sqlalchemy.ext.asyncio import AsyncSession
+from datetime import datetime, timezone
+
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from shared.config import get_settings
-from shared.models import User
-from apps.api.services.auth import get_db
+from shared.models import User, UserTier, Job, JobStatus
+from shared.models.database import get_async_session as get_db
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v1/webhooks", tags=["webhooks"])
 
-# Initialize Stripe API key inside the endpoint or lazily
-# (It relies on settings loaded by shared config)
+# Tier → credits mapping
+TIER_CREDITS = {
+    UserTier.FREE: 3,
+    UserTier.CREATOR: 30,
+    UserTier.PRO: 999999,  # Unlimited
+    UserTier.STUDIO: 999999,
+    UserTier.ENTERPRISE: 999999,
+}
+
+# Stripe price_id → tier mapping (configure these in .env or here)
+PRICE_TO_TIER = {
+    "price_creator_monthly": UserTier.CREATOR,
+    "price_pro_monthly": UserTier.PRO,
+    "price_studio_monthly": UserTier.STUDIO,
+}
 
 
-@router.post("/webhooks/stripe", include_in_schema=False)
+@router.post("/stripe")
 async def stripe_webhook(request: Request, db: AsyncSession = Depends(get_db)):
-    """Handle Stripe webhooks for subscription updates."""
+    """Handle Stripe webhook events for subscription management."""
     settings = get_settings()
-    stripe.api_key = settings.stripe.secret_key
-    endpoint_secret = settings.stripe.webhook_secret
-
     payload = await request.body()
-    sig_header = request.headers.get("stripe-signature")
+    sig_header = request.headers.get("stripe-signature", "")
 
     try:
-        event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
-    except ValueError as e:
-        logger.error(f"Invalid payload: {e}")
+        import stripe
+        stripe.api_key = settings.stripe.secret_key
+
+        webhook_secret = settings.stripe.webhook_secret
+        if not webhook_secret:
+            logger.error("STRIPE_WEBHOOK_SECRET not configured")
+            raise HTTPException(status_code=500, detail="Webhook secret not configured")
+
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, webhook_secret
+        )
+    except ValueError:
         raise HTTPException(status_code=400, detail="Invalid payload")
-    except stripe.error.SignatureVerificationError as e:
-        logger.error(f"Invalid signature: {e}")
-        raise HTTPException(status_code=400, detail="Invalid signature")
+    except Exception as e:
+        logger.error(f"Stripe webhook verification failed: {e}")
+        raise HTTPException(status_code=400, detail=f"Signature verification failed: {str(e)}")
 
-    # Handle the event
-    if event.type == "checkout.session.completed":
-        session = event.data.object
-        await _handle_checkout_session(session, db)
-    elif event.type == "customer.subscription.updated":
-        subscription = event.data.object
-        await _handle_subscription_updated(subscription, db)
-    elif event.type == "customer.subscription.deleted":
-        subscription = event.data.object
-        await _handle_subscription_deleted(subscription, db)
+    event_type = event.get("type", "")
+    data = event.get("data", {}).get("object", {})
+
+    logger.info(f"Stripe webhook received: {event_type}")
+
+    if event_type == "checkout.session.completed":
+        await _handle_checkout_completed(db, data)
+    elif event_type == "customer.subscription.updated":
+        await _handle_subscription_updated(db, data)
+    elif event_type == "customer.subscription.deleted":
+        await _handle_subscription_deleted(db, data)
+    elif event_type == "invoice.payment_succeeded":
+        await _handle_payment_succeeded(db, data)
+    elif event_type == "invoice.payment_failed":
+        await _handle_payment_failed(db, data)
     else:
-        logger.info(f"Unhandled event type {event.type}")
+        logger.info(f"Unhandled Stripe event: {event_type}")
 
-    return Response(content="success", media_type="text/plain")
+    return {"status": "ok"}
 
 
-async def _handle_checkout_session(session: dict, db: AsyncSession):
-    """Grant credits or upgrade tier based on checkout session."""
-    client_reference_id = session.get("client_reference_id")
-    if not client_reference_id:
+async def _handle_checkout_completed(db: AsyncSession, data: dict):
+    """New subscription checkout completed."""
+    customer_id = data.get("customer")
+    if not customer_id:
         return
 
-    result = await db.execute(select(User).where(User.id == client_reference_id))
+    result = await db.execute(
+        select(User).where(User.stripe_customer_id == customer_id)
+    )
     user = result.scalar_one_or_none()
-    
-    if user:
-        user.stripe_customer_id = session.get("customer")
-        # For simplicity, assign 10 credits per checkout
-        user.credits_remaining += 10
-        await db.commit()
+    if not user:
+        logger.warning(f"No user found for Stripe customer {customer_id}")
+        return
+
+    # Determine tier from subscription
+    subscription_id = data.get("subscription")
+    if subscription_id:
+        try:
+            import stripe
+            sub = stripe.Subscription.retrieve(subscription_id)
+            price_id = sub["items"]["data"][0]["price"]["id"] if sub.get("items") else None
+            tier = PRICE_TO_TIER.get(price_id, UserTier.CREATOR)
+        except Exception:
+            tier = UserTier.CREATOR
+    else:
+        tier = UserTier.CREATOR
+
+    user.tier = tier
+    user.credits_remaining = TIER_CREDITS.get(tier, 30)
+    await db.commit()
+    logger.info(f"User {user.email} upgraded to {tier.value} via checkout")
 
 
-async def _handle_subscription_updated(subscription: dict, db: AsyncSession):
-    """Upgrade user tier on subscription active."""
-    customer_id = subscription.get("customer")
-    status = subscription.get("status")
+async def _handle_subscription_updated(db: AsyncSession, data: dict):
+    """Subscription plan changed (upgrade/downgrade)."""
+    customer_id = data.get("customer")
+    if not customer_id:
+        return
 
-    if status == "active":
-        result = await db.execute(select(User).where(User.stripe_customer_id == customer_id))
-        user = result.scalar_one_or_none()
-        if user:
-            # Simple assumption: Pro tier
-            from shared.models import UserTier
-            user.tier = UserTier.PRO
-            user.credits_remaining += 50
+    result = await db.execute(
+        select(User).where(User.stripe_customer_id == customer_id)
+    )
+    user = result.scalar_one_or_none()
+    if not user:
+        return
+
+    # Get new price/tier
+    items = data.get("items", {}).get("data", [])
+    if items:
+        price_id = items[0].get("price", {}).get("id")
+        new_tier = PRICE_TO_TIER.get(price_id, user.tier)
+
+        if new_tier != user.tier:
+            old_tier = user.tier
+            user.tier = new_tier
+            user.credits_remaining = TIER_CREDITS.get(new_tier, 30)
             await db.commit()
+            logger.info(f"User {user.email} changed tier: {old_tier.value} → {new_tier.value}")
 
 
-async def _handle_subscription_deleted(subscription: dict, db: AsyncSession):
-    """Downgrade user tier on subscription cancelled."""
-    customer_id = subscription.get("customer")
-    
-    result = await db.execute(select(User).where(User.stripe_customer_id == customer_id))
+async def _handle_subscription_deleted(db: AsyncSession, data: dict):
+    """Subscription cancelled — downgrade to free."""
+    customer_id = data.get("customer")
+    if not customer_id:
+        return
+
+    result = await db.execute(
+        select(User).where(User.stripe_customer_id == customer_id)
+    )
     user = result.scalar_one_or_none()
-    if user:
-        from shared.models import UserTier
-        user.tier = UserTier.FREE
-        await db.commit()
+    if not user:
+        return
+
+    user.tier = UserTier.FREE
+    user.credits_remaining = TIER_CREDITS[UserTier.FREE]
+    await db.commit()
+    logger.info(f"User {user.email} downgraded to free (subscription cancelled)")
 
 
-@router.post("/webhooks")
-async def register_webhook():
-    """Register webhook for job completion notifications to external systems."""
-    # Note: Full implementation would involve saving to a WebhookEndpoint table.
-    # We provide this for spec compliance, stubbed for future expansion.
-    return {"message": "Webhook registered successfully", "status": "active"}
+async def _handle_payment_succeeded(db: AsyncSession, data: dict):
+    """Recurring payment succeeded — reset credits."""
+    customer_id = data.get("customer")
+    if not customer_id:
+        return
+
+    result = await db.execute(
+        select(User).where(User.stripe_customer_id == customer_id)
+    )
+    user = result.scalar_one_or_none()
+    if not user:
+        return
+
+    user.credits_remaining = TIER_CREDITS.get(user.tier, 3)
+    await db.commit()
+    logger.info(f"Credits reset for {user.email} ({user.tier.value}): {user.credits_remaining}")
+
+
+async def _handle_payment_failed(db: AsyncSession, data: dict):
+    """Payment failed — log but don't immediately downgrade."""
+    customer_id = data.get("customer")
+    logger.warning(f"Payment failed for Stripe customer {customer_id}")
+
+
+@router.post("/job-complete")
+async def job_complete_webhook(request: Request, db: AsyncSession = Depends(get_db)):
+    """External webhook for job completion notifications."""
+    body = await request.json()
+    job_id = body.get("job_id")
+    status_str = body.get("status")
+
+    if not job_id:
+        raise HTTPException(status_code=400, detail="job_id required")
+
+    result = await db.execute(select(Job).where(Job.id == job_id))
+    job = result.scalar_one_or_none()
+
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    return {
+        "job_id": str(job.id),
+        "status": job.status.value,
+        "progress": job.progress,
+    }

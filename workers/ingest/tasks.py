@@ -165,14 +165,27 @@ def process_media(self, job_id: str, media_id: str):
                 # Process photo: resize, analyze
                 from PIL import Image
 
+                # For local development, try local file first
                 local_path = os.path.join("/app/uploads", str(media_item.user_id), media_item.filename)
+                input_path = os.path.join(tmpdir, media_item.filename)
                 if os.path.exists(local_path):
-                    img = Image.open(local_path)
+                    import shutil
+                    shutil.copy2(local_path, input_path)
+                elif media_item.r2_key:
+                    from shared.storage import get_storage
+                    storage = get_storage()
+                    storage.download_file(media_item.r2_key, input_path)
+                else:
+                    raise FileNotFoundError(f"Media not found locally or in R2: {media_item.id}")
+
+                if os.path.exists(input_path):
+                    img = Image.open(input_path)
                     media_item.width = img.width
                     media_item.height = img.height
 
                     # Resize if needed
                     max_dim = 3840  # 4K max
+                    resized_path = input_path
                     if max(img.width, img.height) > max_dim:
                         img.thumbnail((max_dim, max_dim), Image.LANCZOS)
                         resized_path = os.path.join(tmpdir, "resized.jpg")
@@ -183,6 +196,20 @@ def process_media(self, job_id: str, media_id: str):
                     thumb.thumbnail((480, 480), Image.LANCZOS)
                     thumb_path = os.path.join(tmpdir, "thumb.jpg")
                     thumb.save(thumb_path, "JPEG", quality=85)
+
+                    r2_key = f"processed/{media_item.user_id}/{media_item.id}/resized.jpg"
+                    thumb_r2_key = f"processed/{media_item.user_id}/{media_item.id}/thumb.jpg"
+                    try:
+                        from shared.storage import get_storage
+                        storage = get_storage()
+                        storage.upload_file(resized_path, r2_key, "image/jpeg")
+                        media_item.r2_key = r2_key
+                        storage.upload_file(thumb_path, thumb_r2_key, "image/jpeg")
+                        media_item.r2_thumb_key = thumb_r2_key
+                    except Exception as e:
+                        logger.warning(f"R2 upload skipped/failed (dev mode): {e}")
+                        media_item.r2_key = r2_key
+                        media_item.r2_thumb_key = thumb_r2_key
 
             # Mark as ready
             media_item.status = MediaStatus.READY

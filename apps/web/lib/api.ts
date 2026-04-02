@@ -56,6 +56,14 @@ export const jobsApi = {
     api(`/api/v1/jobs/${jobId}/blueprint`, { token }),
 };
 
+// ── Auth API ──
+export const authApi = {
+  me: (token: string) => api("/api/v1/auth/me", { token }),
+  updateProfile: (data: { name?: string; locale?: string; timezone?: string }, token: string) =>
+    api("/api/v1/auth/me", { method: "PATCH", body: data, token }),
+  exportData: (token: string) => api("/api/v1/auth/me/export", { token }),
+};
+
 // ── Reel API ──
 export const reelsApi = {
   get: (reelId: string, token: string) =>

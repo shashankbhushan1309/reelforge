@@ -110,7 +110,7 @@ async def regenerate_reel(
     if user.credits_remaining <= 0:
         raise HTTPException(status_code=status.HTTP_402_PAYMENT_REQUIRED, detail="No credits remaining")
 
-    # Create new job based on original
+    # Create new job with ALL data from original
     new_job = Job(
         user_id=user.id,
         mode=original_job.mode,
@@ -118,22 +118,30 @@ async def regenerate_reel(
         inspiration_media_id=original_job.inspiration_media_id,
         media_ids=original_job.media_ids,
         style_dna=original_job.style_dna,
+        trend_profile_id=original_job.trend_profile_id,
         niche=original_job.niche,
         region=original_job.region,
-        blueprint=original_job.blueprint,  # Pass original for differentiation
+        style_preference=original_job.style_preference,
+        beat_grid=original_job.beat_grid,
+        audio_analysis=original_job.audio_analysis,
+        progress=55,
     )
     db.add(new_job)
     user.credits_remaining -= 1
     await db.commit()
     await db.refresh(new_job)
 
-    # Push to blueprint queue with regeneration context
-    queue = get_queue()
-    queue.push(QUEUE_ASSEMBLE, {
-        "job_id": str(new_job.id),
-        "regeneration_number": request.regeneration_number,
-        "original_blueprint": original_job.blueprint,
-    })
+    # Dispatch directly to blueprint worker (Celery)
+    try:
+        from workers.blueprint.tasks import generate_blueprint
+        generate_blueprint.delay(str(new_job.id))
+    except Exception as e:
+        logger.warning(f"Celery dispatch failed, using queue fallback: {e}")
+        queue = get_queue()
+        queue.push(QUEUE_ASSEMBLE, {
+            "job_id": str(new_job.id),
+            "regeneration_number": request.regeneration_number,
+        })
 
     return new_job
 

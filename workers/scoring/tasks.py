@@ -154,10 +154,20 @@ def score_media(self, job_id: str, media_id: str):
 
         # For photos, score the whole image
         if media_item.type == MediaType.PHOTO:
-            photo_path = os.path.join("/app/uploads", str(media_item.user_id), media_item.filename)
-            if os.path.exists(photo_path):
-                scores = score_frame_with_gpt4o(photo_path)
-                composite = compute_composite_score(scores)
+            import tempfile
+            with tempfile.TemporaryDirectory() as tmpdir:
+                photo_path = os.path.join("/app/uploads", str(media_item.user_id), media_item.filename)
+                if not os.path.exists(photo_path) and media_item.r2_key:
+                    photo_path = os.path.join(tmpdir, "input.jpg")
+                    try:
+                        from shared.storage import get_storage
+                        get_storage().download_file(media_item.r2_key, photo_path)
+                    except Exception as e:
+                        logger.warning(f"Could not download photo from R2: {e}")
+
+                if os.path.exists(photo_path):
+                    scores = score_frame_with_gpt4o(photo_path)
+                    composite = compute_composite_score(scores)
 
                 # Create a single segment for the photo
                 segment = MediaSegment(
@@ -185,7 +195,8 @@ def score_media(self, job_id: str, media_id: str):
 
         # For videos, score each segment
         segments = session.execute(
-            select(MediaSegment).where(MediaSegment.media_item_id == UUID(media_id))
+            select(MediaSegment)
+            .where(MediaSegment.media_item_id == media_item.id)
             .order_by(MediaSegment.start_ms)
         ).scalars().all()
 
@@ -195,9 +206,15 @@ def score_media(self, job_id: str, media_id: str):
             analyze_audio.delay(job_id, media_id)
             return
 
-        video_path = os.path.join("/app/uploads", str(media_item.user_id), media_item.filename)
-
         with tempfile.TemporaryDirectory() as tmpdir:
+            video_path = os.path.join("/app/uploads", str(media_item.user_id), media_item.filename)
+            if not os.path.exists(video_path) and media_item.r2_key:
+                video_path = os.path.join(tmpdir, "input.mp4")
+                try:
+                    from shared.storage import get_storage
+                    get_storage().download_file(media_item.r2_key, video_path)
+                except Exception as e:
+                    logger.warning(f"Could not download video from R2: {e}")
             for segment in segments:
                 # Extract keyframe from middle of segment
                 midpoint_ms = (segment.start_ms + segment.end_ms) // 2

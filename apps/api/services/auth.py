@@ -7,9 +7,17 @@ from uuid import UUID
 import jwt
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from shared.config import get_settings
-from shared.models.database import AsyncSessionLocal, get_async_session as get_db
+from shared.models import User
+from shared.models.database import get_async_session as get_db
+
+logger = logging.getLogger(__name__)
+
+# Security scheme — auto_error=False so optional auth endpoints work
+security = HTTPBearer(auto_error=False)
 
 
 async def verify_token(token: str) -> dict:

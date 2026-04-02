@@ -4,8 +4,8 @@ import { Video, Info, AlertTriangle, PlayCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface ShotInstruction {
-  shot_number: int;
-  duration_seconds: int;
+  shot_number: number;
+  duration_seconds: number;
   title: string;
   what_to_film: string;
   how_to_film_it: string;

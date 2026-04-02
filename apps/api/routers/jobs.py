@@ -46,17 +46,15 @@ async def create_clone_job(
         raise HTTPException(status_code=status.HTTP_402_PAYMENT_REQUIRED, detail=str(e))
 
     # Push to ingest queue for user media, and DNA queue for inspiration
-    queue = get_queue()
-    queue.push(QUEUE_DNA, {
-        "job_id": str(job.id),
-        "media_id": str(request.inspiration_media_id),
-        "mode": "clone",
-    })
-    for media_id in request.user_media_ids:
-        queue.push(QUEUE_INGEST, {
-            "job_id": str(job.id),
-            "media_id": str(media_id),
-        })
+    try:
+        from workers.dna.tasks import extract_dna
+        from workers.ingest.tasks import process_media
+
+        extract_dna.delay(str(job.id), str(request.inspiration_media_id), "clone")
+        for media_id in request.user_media_ids:
+            process_media.delay(str(job.id), str(media_id))
+    except Exception as e:
+        logger.warning(f"Celery dispatch failed: {e}")
 
     return job
 
@@ -85,12 +83,12 @@ async def create_auto_job(
         raise HTTPException(status_code=status.HTTP_402_PAYMENT_REQUIRED, detail=str(e))
 
     # Push all media to ingest queue
-    queue = get_queue()
-    for media_id in request.media_ids:
-        queue.push(QUEUE_INGEST, {
-            "job_id": str(job.id),
-            "media_id": str(media_id),
-        })
+    try:
+        from workers.ingest.tasks import process_media
+        for media_id in request.media_ids:
+            process_media.delay(str(job.id), str(media_id))
+    except Exception as e:
+        logger.warning(f"Celery dispatch failed: {e}")
 
     return job
 

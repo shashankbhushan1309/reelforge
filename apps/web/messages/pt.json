@@ -1,1 +1,13 @@
-{}
+{
+  "Common": {
+    "loading": "Carregando...",
+    "save": "Salvar",
+    "cancel": "Cancelar"
+  },
+  "Navigation": {
+    "dashboard": "Painel",
+    "vault": "Cofre",
+    "settings": "Configurações",
+    "logout": "Sair"
+  }
+}

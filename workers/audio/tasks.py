@@ -15,7 +15,7 @@ from celery import shared_task
 from sqlalchemy import select
 
 from shared.config import get_settings
-from shared.models import MediaItem, MediaType, Job, JobStatus, JobMode
+from shared.models import MediaItem, MediaType, MediaStatus, Job, JobStatus, JobMode
 from shared.models.database import SyncSessionLocal
 
 logger = logging.getLogger(__name__)
@@ -190,7 +190,7 @@ def _check_and_advance_pipeline(session, job: Job):
         .select_from(MediaItem)
         .where(
             MediaItem.id.in_(job.media_ids or []),
-            MediaItem.status == "ready",
+            MediaItem.status == MediaStatus.READY,
         )
     ).scalar() or 0
 

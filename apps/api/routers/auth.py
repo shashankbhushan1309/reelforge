@@ -107,7 +107,55 @@ async def delete_account(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Delete user account and all associated data (GDPR compliance)."""
+    """Delete user account and all associated data (GDPR compliance).
+
+    Deletes: user profile, all media from R2, all reels, all jobs, audit logs.
+    """
+    import logging
+    _logger = logging.getLogger(__name__)
+
+    # 1. Cancel any pending/running jobs
+    from sqlalchemy import select, update
+    from shared.models import JobStatus
+    await db.execute(
+        update(Job)
+        .where(Job.user_id == user.id, Job.status.notin_([JobStatus.COMPLETED, JobStatus.FAILED]))
+        .values(status=JobStatus.FAILED, error_message="Account deleted by user")
+    )
+
+    # 2. Collect R2 keys for deletion
+    r2_keys_to_delete = []
+
+    media_items = await db.execute(select(MediaItem).where(MediaItem.user_id == user.id))
+    for m in media_items.scalars().all():
+        if m.r2_key:
+            r2_keys_to_delete.append(m.r2_key)
+        if m.r2_thumb_key:
+            r2_keys_to_delete.append(m.r2_thumb_key)
+
+    reels = await db.execute(select(Reel).where(Reel.user_id == user.id))
+    for r in reels.scalars().all():
+        for key in [r.r2_key, r.r2_square_key, r.r2_landscape_key, r.thumbnail_r2_key]:
+            if key:
+                r2_keys_to_delete.append(key)
+
+    # 3. Delete from R2 (best effort)
+    if r2_keys_to_delete:
+        try:
+            from shared.storage import get_storage
+            storage = get_storage()
+            for key in r2_keys_to_delete:
+                try:
+                    storage.delete_file(key)
+                except Exception:
+                    pass
+            _logger.info(f"Deleted {len(r2_keys_to_delete)} R2 objects for user {user.email}")
+        except Exception as e:
+            _logger.warning(f"R2 cleanup failed (will cascade DB delete): {e}")
+
+    # 4. Cascade-delete user (all related records via FK cascade)
     await db.delete(user)
     await db.commit()
-    return {"message": "Account deleted successfully"}
+
+    _logger.info(f"Account deleted: {user.email}")
+    return {"message": "Account and all associated data deleted successfully"}

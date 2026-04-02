@@ -1,1 +1,13 @@
-{}
+{
+  "Common": {
+    "loading": "Wird geladen...",
+    "save": "Speichern",
+    "cancel": "Abbrechen"
+  },
+  "Navigation": {
+    "dashboard": "Dashboard",
+    "vault": "Tresor",
+    "settings": "Einstellungen",
+    "logout": "Abmelden"
+  }
+}

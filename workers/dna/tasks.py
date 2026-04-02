@@ -12,8 +12,14 @@ import subprocess
 import tempfile
 from uuid import UUID
 
-import cv2
-import numpy as np
+try:
+    import cv2
+    import numpy as np
+    HAS_CV2 = True
+except ImportError:
+    HAS_CV2 = False
+    cv2 = None
+    np = None
 from celery import shared_task
 from sqlalchemy import select
 
