@@ -1,4 +1,4 @@
-/** ReelForge AI — Dashboard: Main creation hub */
+/** Dashboard — Main creation hub */
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
@@ -449,22 +449,79 @@ export default function DashboardPage() {
 
               {/* Action buttons */}
               <div className="flex flex-wrap gap-3 justify-center mb-6">
-                <button className="btn-primary">
+                <button
+                  className="btn-primary"
+                  onClick={() => reelData?.download_url && window.open(reelData.download_url, "_blank")}
+                >
                   📥 Download 9:16
                 </button>
-                <button className="btn-secondary">
+                <button
+                  className="btn-secondary"
+                  onClick={() => reelData?.square_download_url && window.open(reelData.square_download_url, "_blank")}
+                >
                   📐 Download 1:1
                 </button>
-                <button className="btn-secondary">
+                <button
+                  className="btn-secondary"
+                  onClick={() => reelData?.landscape_download_url && window.open(reelData.landscape_download_url, "_blank")}
+                >
                   🖥️ Download 16:9
                 </button>
               </div>
 
               <div className="flex flex-wrap gap-3 justify-center">
-                <button className="btn-secondary !text-sm">🔄 Regenerate</button>
-                <button className="btn-secondary !text-sm">🔗 Share</button>
-                <button className="btn-secondary !text-sm">📋 Copy Caption</button>
-                <button className="btn-secondary !text-sm"># Copy Hashtags</button>
+                <button
+                  className="btn-secondary !text-sm"
+                  onClick={async () => {
+                    if (!reelData?.id || !token) return;
+                    try {
+                      await reelsApi.regenerate(reelData.id, { regeneration_number: 1 }, token);
+                      setReelReady(false);
+                      setIsGenerating(true);
+                      setProgress(55);
+                      setCurrentStage("generating_blueprint");
+                    } catch (err: any) {
+                      alert(err.message || "Regeneration failed");
+                    }
+                  }}
+                >
+                  🔄 Regenerate
+                </button>
+                <button
+                  className="btn-secondary !text-sm"
+                  onClick={async () => {
+                    if (!reelData?.id || !token) return;
+                    try {
+                      const res = await reelsApi.share(reelData.id, token);
+                      await navigator.clipboard.writeText(res.share_url);
+                      alert("Share link copied to clipboard!");
+                    } catch (err: any) {
+                      alert(err.message || "Share failed");
+                    }
+                  }}
+                >
+                  🔗 Share
+                </button>
+                <button
+                  className="btn-secondary !text-sm"
+                  onClick={() => {
+                    const text = reelData?.captions?.text || "";
+                    navigator.clipboard.writeText(text);
+                    alert("Caption copied!");
+                  }}
+                >
+                  📋 Copy Caption
+                </button>
+                <button
+                  className="btn-secondary !text-sm"
+                  onClick={() => {
+                    const tags = reelData?.captions?.hashtags?.join(" ") || "";
+                    navigator.clipboard.writeText(tags);
+                    alert("Hashtags copied!");
+                  }}
+                >
+                  # Copy Hashtags
+                </button>
               </div>
 
               {/* Generated caption */}

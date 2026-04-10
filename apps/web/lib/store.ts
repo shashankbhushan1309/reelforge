@@ -1,8 +1,8 @@
-/** ReelForge AI — Zustand store for global state management */
+/** Zustand store for global state management */
 
 import { create } from "zustand";
 
-// ── Types ──
+
 
 interface MediaItem {
   id: string;
@@ -35,7 +35,7 @@ interface Reel {
   captions?: Record<string, any>;
 }
 
-// ── App Store ──
+
 
 interface AppState {
   // Auth

@@ -2,12 +2,104 @@
   "Common": {
     "loading": "読み込み中...",
     "save": "保存",
-    "cancel": "キャンセル"
+    "cancel": "キャンセル",
+    "delete": "削除",
+    "confirm": "確認",
+    "back": "戻る",
+    "next": "次へ",
+    "close": "閉じる",
+    "error": "エラーが発生しました",
+    "success": "成功",
+    "retry": "再試行"
   },
   "Navigation": {
     "dashboard": "ダッシュボード",
-    "vault": "ボルト",
+    "vault": "メディア保管庫",
     "settings": "設定",
-    "logout": "ログアウト"
+    "logout": "ログアウト",
+    "login": "ログイン",
+    "signup": "新規登録"
+  },
+  "Landing": {
+    "hero_title": "編集不要のAI動画ディレクター",
+    "hero_subtitle": "素材をアップロード。90秒でプロ品質のリールを作成。",
+    "cta_start": "無料で始める",
+    "cta_demo": "デモを見る",
+    "feature_1_title": "自動作成モード",
+    "feature_1_desc": "AIが最適なクリップを選び、トレンドに合わせてリールを編集します。",
+    "feature_2_title": "クローンモード",
+    "feature_2_desc": "任意のリールからスタイルDNAを抽出し、あなたの素材で再現します。",
+    "feature_3_title": "トレンドエンジン",
+    "feature_3_desc": "Instagram、TikTok、YouTubeからのリアルタイムトレンド情報。"
+  },
+  "Dashboard": {
+    "mode_auto": "自動作成",
+    "mode_clone": "クローンモード",
+    "upload_title": "メディアをアップロード",
+    "upload_subtitle": "MP4, MOV, JPG, PNG, WEBP — 未編集の素材",
+    "upload_inspiration": "インスピレーションリールをアップロード",
+    "niche_label": "コンテンツジャンル",
+    "generate": "リールを生成",
+    "generating": "リールを作成中",
+    "estimated_time": "推定時間：約90秒",
+    "reel_ready": "リールが完成しました！",
+    "reel_export": "Instagram、TikTok、YouTube Shortsに対応",
+    "download_portrait": "9:16をダウンロード",
+    "download_square": "1:1をダウンロード",
+    "download_landscape": "16:9をダウンロード",
+    "regenerate": "再生成",
+    "share": "共有",
+    "copy_caption": "キャプションをコピー",
+    "copy_hashtags": "ハッシュタグをコピー"
+  },
+  "Vault": {
+    "title": "メディア保管庫",
+    "subtitle": "アイテム · スコアリング済み",
+    "filter_all": "すべて",
+    "filter_videos": "動画",
+    "filter_photos": "写真",
+    "sort_score": "スコア順",
+    "sort_size": "サイズ順",
+    "create_reel": "リールを作成"
+  },
+  "Settings": {
+    "title": "設定",
+    "tab_billing": "支払い",
+    "tab_account": "アカウント",
+    "tab_preferences": "環境設定",
+    "tab_export": "エクスポート",
+    "current_plan": "現在のプラン",
+    "credits_remaining": "残りクレジット",
+    "upgrade": "アップグレード",
+    "display_name": "表示名",
+    "email": "メールアドレス",
+    "timezone": "タイムゾーン",
+    "save_changes": "変更を保存",
+    "danger_zone": "危険な操作",
+    "delete_account": "アカウントを削除",
+    "delete_warning": "アカウントとすべてのデータを完全に削除します。この操作は取り消せません。"
+  },
+  "Auth": {
+    "login_title": "おかえりなさい",
+    "login_subtitle": "アカウントにサインインして作成を続けましょう",
+    "signup_title": "アカウントを作成",
+    "signup_subtitle": "90秒でプロ品質のリールを作り始めましょう",
+    "email_label": "メールアドレス",
+    "password_label": "パスワード",
+    "name_label": "氏名",
+    "signing_in": "サインイン中...",
+    "creating_account": "アカウント作成中...",
+    "no_account": "アカウントをお持ちでないですか？",
+    "has_account": "アカウントをお持ちですか？"
+  },
+  "Onboarding": {
+    "welcome": "ReelForgeへようこそ！",
+    "personalize": "あなたの体験をカスタマイズしましょう。30秒で完了です。",
+    "lets_go": "始めましょう！",
+    "what_create": "何を作成しますか？",
+    "pick_niches": "ジャンルを選んでください。最適なトレンドを見つけるのに役立ちます。",
+    "where_based": "どこにお住まいですか？",
+    "region_help": "お住まいの地域のトレンドを表示します。",
+    "start_creating": "作成を始める"
   }
 }

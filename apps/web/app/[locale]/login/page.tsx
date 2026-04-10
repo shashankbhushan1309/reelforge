@@ -1,4 +1,4 @@
-/** ReelForge AI — Login Page */
+/** Login Page */
 "use client";
 
 import { motion } from "framer-motion";

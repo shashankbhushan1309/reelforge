@@ -1,17 +1,4 @@
-"""ReelForge AI — Assembly Worker.
-
-GPU-enabled worker that renders the final reel using ffmpeg:
-- Slot extraction with precise trimming
-- Speed ramping, Ken Burns for photos
-- Transitions (hard cut, whip pan, zoom burst, dissolve, glitch)
-- LUT colour grading
-- Text overlays with beat-synced timing
-- Audio mixing with ducking
-- Multi-format export (9:16, 1:1, 16:9)
-- Quality validation before delivery
-- Thumbnail generation
-- Notification dispatch on completion
-"""
+"""Assembly worker — final reel rendering with ffmpeg."""
 
 import json
 import logging
@@ -487,7 +474,7 @@ def assemble_reel(self, job_id: str):
                 session.commit()
                 return
 
-            # ── Concatenate clips with per-slot transitions ──
+            # Concatenate clips with transitions
             if len(clip_paths) == 1:
                 assembled_path = clip_paths[0]
             else:
@@ -515,13 +502,13 @@ def assemble_reel(self, job_id: str):
 
                 assembled_path = current_path
 
-            # ── Apply LUT colour grading ──
+            # Apply LUT colour grading
             color_grade = blueprint.get("color_grade", "natural")
             graded_path = os.path.join(tmpdir, "graded.mp4")
             if apply_lut(assembled_path, graded_path, color_grade):
                 assembled_path = graded_path
 
-            # ── Apply text overlays ──
+            # Apply text overlays
             text_overlays = list(blueprint.get("text_overlays", []))
             if job.captions:
                 # Add hook text
@@ -547,7 +534,29 @@ def assemble_reel(self, job_id: str):
                 if add_text_overlay(assembled_path, text_output, text_overlays):
                     assembled_path = text_output
 
-            # ── Final render with quality settings ──
+            # Mix background audio if blueprint specifies a music track
+            music_r2_key = blueprint.get("music_r2_key")
+            if music_r2_key:
+                music_path = os.path.join(tmpdir, "music.mp3")
+                try:
+                    from shared.storage import get_storage
+                    get_storage().download_file(music_r2_key, music_path)
+
+                    # Compute speech timestamps for ducking
+                    duck_at = []
+                    if job.audio_analysis and job.audio_analysis.get("tracks"):
+                        for track in job.audio_analysis["tracks"]:
+                            for seg in track.get("speech_segments", []):
+                                duck_at.append(float(seg.get("start", 0)))
+
+                    mixed_path = os.path.join(tmpdir, "with_audio.mp4")
+                    if mix_audio(assembled_path, music_path, mixed_path, duck_at=duck_at):
+                        assembled_path = mixed_path
+                        logger.info(f"[Assembly] Audio mixed with ducking at {len(duck_at)} points")
+                except Exception as e:
+                    logger.warning(f"[Assembly] Audio mixing skipped: {e}")
+
+            # Final render with quality settings
             final_path = os.path.join(tmpdir, "final_9x16.mp4")
             cmd = [
                 "ffmpeg", "-y", "-i", assembled_path,
@@ -563,22 +572,22 @@ def assemble_reel(self, job_id: str):
             if not os.path.exists(final_path):
                 final_path = assembled_path
 
-            # ── Quality validation ──
+            # Quality validation
             quality = validate_quality(final_path, blueprint)
             logger.info(f"[Assembly] Quality check: {quality}")
 
-            # ── Generate thumbnail ──
+            # Generate thumbnail
             thumb_path = os.path.join(tmpdir, "thumbnail.jpg")
             # Capture thumbnail at 1 second (usually the hook shot)
             generate_thumbnail(final_path, thumb_path, timestamp=1.0)
 
-            # ── Generate format variants ──
+            # Generate format variants
             square_path = os.path.join(tmpdir, "final_1x1.mp4")
             landscape_path = os.path.join(tmpdir, "final_16x9.mp4")
             create_square_variant(final_path, square_path)
             create_landscape_variant(final_path, landscape_path)
 
-            # ── Upload to R2 ──
+            # Upload to R2
             r2_key_9x16 = f"reels/{job.user_id}/{job.id}/reel_9x16.mp4"
             r2_key_1x1 = f"reels/{job.user_id}/{job.id}/reel_1x1.mp4"
             r2_key_16x9 = f"reels/{job.user_id}/{job.id}/reel_16x9.mp4"
@@ -597,7 +606,7 @@ def assemble_reel(self, job_id: str):
             except Exception as e:
                 logger.warning(f"R2 upload skipped (dev mode): {e}")
 
-            # ── Get final duration ──
+            # Get final duration
             try:
                 probe = subprocess.run(
                     ["ffprobe", "-v", "quiet", "-print_format", "json", "-show_format", final_path],
@@ -607,7 +616,7 @@ def assemble_reel(self, job_id: str):
             except Exception:
                 duration_ms = int(blueprint.get("total_duration", 15) * 1000)
 
-            # ── Create Reel record ──
+            # Create Reel record
             reel = Reel(
                 job_id=job.id,
                 user_id=job.user_id,
@@ -621,19 +630,19 @@ def assemble_reel(self, job_id: str):
             )
             session.add(reel)
 
-            # ── Update job status ──
+            # Update job status
             job.status = JobStatus.COMPLETED
             job.progress = 100
             session.commit()
 
-            # ── Send notification ──
+            # Send notification
             try:
                 from services.notify.main import send_notification
                 send_notification(str(job.id), "reel_ready")
             except Exception as e:
                 logger.warning(f"Notification dispatch failed: {e}")
 
-            logger.info(f"[Assembly] ✅ Reel assembled for job {job_id}, duration: {duration_ms}ms")
+            logger.info(f"[Assembly] Reel assembled for job {job_id}, duration: {duration_ms}ms")
 
     except Exception as e:
         logger.error(f"[Assembly] Error: {e}")

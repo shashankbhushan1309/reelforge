@@ -1,8 +1,4 @@
-"""ReelForge AI — Blueprint Generation Worker.
-
-Calls Claude API for creative blueprint generation, matches media to slots,
-generates captions and text overlays.
-"""
+"""Blueprint generation worker — Claude-powered reel structure planning."""
 
 import json
 import logging
@@ -19,7 +15,7 @@ from shared.models.database import SyncSessionLocal
 
 logger = logging.getLogger(__name__)
 
-# ── Prompts ──
+
 
 BLUEPRINT_PROMPT = """You are ReelForge AI's creative director engine. You design precise time-coded reel blueprints that produce Instagram-influencer-quality short-form videos. You understand pacing, visual storytelling, trend alignment, and the psychology of scroll-stopping content.
 

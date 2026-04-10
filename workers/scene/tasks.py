@@ -1,8 +1,4 @@
-"""ReelForge AI — Scene Detection Worker.
-
-Runs PySceneDetect to segment videos into individual scenes.
-Each segment is stored in media_segments with start/end timestamps.
-"""
+"""Scene detection worker — PySceneDetect segmentation."""
 
 import logging
 import os

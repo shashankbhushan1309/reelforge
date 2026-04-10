@@ -1,8 +1,4 @@
-"""ReelForge AI — Audio Analysis Worker.
-
-Analyzes audio tracks: BPM detection via Librosa, speech detection
-via Whisper, beat grid generation for cut alignment.
-"""
+"""Audio analysis worker — BPM, beat grid, and speech detection."""
 
 import json
 import logging
@@ -197,13 +193,18 @@ def _check_and_advance_pipeline(session, job: Job):
     total_media = len(job.media_ids or [])
 
     if processed_count >= total_media or total_media == 0:
-        # All media processed — advance to next stage
         if job.mode == JobMode.CLONE:
-            # Clone mode: wait for DNA extraction, then blueprint
-            # DNA worker handles pushing to blueprint
-            logger.info(f"[Audio] All media processed for clone job {job.id}")
+            # clone mode: only advance if DNA is also done
+            if job.style_dna:
+                job.status = JobStatus.GENERATING_BLUEPRINT
+                job.progress = 55
+                session.commit()
+
+                from workers.blueprint.tasks import generate_blueprint
+                generate_blueprint.delay(str(job.id))
+            else:
+                logger.info(f"[Audio] Media done for clone job {job.id}, waiting on DNA")
         else:
-            # Auto mode: go directly to blueprint
             job.status = JobStatus.GENERATING_BLUEPRINT
             job.progress = 55
             session.commit()

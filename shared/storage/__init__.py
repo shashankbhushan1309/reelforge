@@ -1,4 +1,4 @@
-"""ReelForge AI — Cloudflare R2 (S3-compatible) storage client."""
+"""Cloudflare R2 (S3-compatible) storage client."""
 
 import io
 import logging

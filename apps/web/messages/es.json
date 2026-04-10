@@ -2,12 +2,104 @@
   "Common": {
     "loading": "Cargando...",
     "save": "Guardar",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "confirm": "Confirmar",
+    "back": "Volver",
+    "next": "Siguiente",
+    "close": "Cerrar",
+    "error": "Algo salió mal",
+    "success": "Éxito",
+    "retry": "Reintentar"
   },
   "Navigation": {
     "dashboard": "Panel",
-    "vault": "Bóveda",
-    "settings": "Ajustes",
-    "logout": "Cerrar sesión"
+    "vault": "Almacén",
+    "settings": "Configuración",
+    "logout": "Cerrar sesión",
+    "login": "Iniciar sesión",
+    "signup": "Registrarse"
+  },
+  "Landing": {
+    "hero_title": "Director de video IA sin edición",
+    "hero_subtitle": "Sube metraje sin editar. Obtén reels de calidad profesional en 90 segundos.",
+    "cta_start": "Empieza gratis",
+    "cta_demo": "Ver demo",
+    "feature_1_title": "Modo Auto-Crear",
+    "feature_1_desc": "La IA selecciona los mejores clips, los ajusta a tendencias y edita tu reel.",
+    "feature_2_title": "Modo Clonar",
+    "feature_2_desc": "Extrae el ADN de estilo de cualquier reel y recréalo con tu propio metraje.",
+    "feature_3_title": "Motor de Tendencias",
+    "feature_3_desc": "Inteligencia de tendencias en tiempo real de Instagram, TikTok y YouTube."
+  },
+  "Dashboard": {
+    "mode_auto": "Auto-Crear",
+    "mode_clone": "Modo Clonar",
+    "upload_title": "Subir medios sin editar",
+    "upload_subtitle": "MP4, MOV, JPG, PNG, WEBP — metraje sin editar",
+    "upload_inspiration": "Subir reel de inspiración",
+    "niche_label": "Nicho de contenido",
+    "generate": "Generar Reel",
+    "generating": "Creando tu Reel",
+    "estimated_time": "Tiempo estimado: ~90 segundos",
+    "reel_ready": "¡Tu Reel está listo!",
+    "reel_export": "Listo para Instagram, TikTok, YouTube Shorts",
+    "download_portrait": "Descargar 9:16",
+    "download_square": "Descargar 1:1",
+    "download_landscape": "Descargar 16:9",
+    "regenerate": "Regenerar",
+    "share": "Compartir",
+    "copy_caption": "Copiar descripción",
+    "copy_hashtags": "Copiar hashtags"
+  },
+  "Vault": {
+    "title": "Almacén de Medios",
+    "subtitle": "elementos · Puntuados y analizados",
+    "filter_all": "Todo",
+    "filter_videos": "Videos",
+    "filter_photos": "Fotos",
+    "sort_score": "Ordenar por puntuación",
+    "sort_size": "Ordenar por tamaño",
+    "create_reel": "Crear Reel"
+  },
+  "Settings": {
+    "title": "Configuración",
+    "tab_billing": "Facturación",
+    "tab_account": "Cuenta",
+    "tab_preferences": "Preferencias",
+    "tab_export": "Exportación",
+    "current_plan": "Plan actual",
+    "credits_remaining": "Créditos restantes",
+    "upgrade": "Mejorar",
+    "display_name": "Nombre para mostrar",
+    "email": "Correo electrónico",
+    "timezone": "Zona horaria",
+    "save_changes": "Guardar cambios",
+    "danger_zone": "Zona de peligro",
+    "delete_account": "Eliminar cuenta",
+    "delete_warning": "Eliminar permanentemente tu cuenta y todos los datos. Esto no se puede deshacer."
+  },
+  "Auth": {
+    "login_title": "Bienvenido de nuevo",
+    "login_subtitle": "Inicia sesión en tu cuenta para continuar creando",
+    "signup_title": "Crea tu cuenta",
+    "signup_subtitle": "Empieza a crear reels de calidad profesional en 90 segundos",
+    "email_label": "Correo electrónico",
+    "password_label": "Contraseña",
+    "name_label": "Nombre completo",
+    "signing_in": "Iniciando sesión...",
+    "creating_account": "Creando cuenta...",
+    "no_account": "¿No tienes una cuenta?",
+    "has_account": "¿Ya tienes una cuenta?"
+  },
+  "Onboarding": {
+    "welcome": "¡Bienvenido a ReelForge!",
+    "personalize": "Personalicemos tu experiencia. Esto toma 30 segundos.",
+    "lets_go": "¡Vamos!",
+    "what_create": "¿Qué creas?",
+    "pick_niches": "Elige tus nichos. Esto nos ayuda a encontrar las tendencias correctas para ti.",
+    "where_based": "¿Dónde estás?",
+    "region_help": "Te mostraremos tendencias de tu región.",
+    "start_creating": "Empezar a Crear"
   }
 }

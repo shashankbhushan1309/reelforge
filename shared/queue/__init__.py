@@ -1,4 +1,4 @@
-"""ReelForge AI — Redis queue helpers for inter-service communication."""
+"""Redis queue helpers for inter-service communication."""
 
 import json
 import logging

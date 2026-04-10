@@ -1,4 +1,4 @@
-"""ReelForge API — Stripe webhooks + external notifications."""
+"""Stripe webhooks and external notification hooks."""
 
 import logging
 from datetime import datetime, timezone
@@ -13,7 +13,7 @@ from shared.models.database import get_async_session as get_db
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/v1/webhooks", tags=["webhooks"])
+router = APIRouter()
 
 # Tier → credits mapping
 TIER_CREDITS = {
@@ -32,7 +32,7 @@ PRICE_TO_TIER = {
 }
 
 
-@router.post("/stripe")
+@router.post("/webhooks/stripe")
 async def stripe_webhook(request: Request, db: AsyncSession = Depends(get_db)):
     """Handle Stripe webhook events for subscription management."""
     settings = get_settings()
@@ -181,7 +181,7 @@ async def _handle_payment_failed(db: AsyncSession, data: dict):
     logger.warning(f"Payment failed for Stripe customer {customer_id}")
 
 
-@router.post("/job-complete")
+@router.post("/webhooks/job-complete")
 async def job_complete_webhook(request: Request, db: AsyncSession = Depends(get_db)):
     """External webhook for job completion notifications."""
     body = await request.json()

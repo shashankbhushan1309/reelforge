@@ -1,4 +1,4 @@
-"""ReelForge API — Jobs router for Clone and Auto-Create modes."""
+"""Jobs router for Clone and Auto-Create modes."""
 
 import logging
 from uuid import UUID

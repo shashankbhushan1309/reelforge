@@ -1,4 +1,4 @@
-"""ReelForge API — Style DNA Templates router."""
+"""Style DNA Templates router."""
 
 import logging
 from uuid import UUID

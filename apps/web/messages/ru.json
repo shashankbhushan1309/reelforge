@@ -2,12 +2,104 @@
   "Common": {
     "loading": "Загрузка...",
     "save": "Сохранить",
-    "cancel": "Отмена"
+    "cancel": "Отмена",
+    "delete": "Удалить",
+    "confirm": "Подтвердить",
+    "back": "Назад",
+    "next": "Далее",
+    "close": "Закрыть",
+    "error": "Что-то пошло не так",
+    "success": "Успех",
+    "retry": "Повторить"
   },
   "Navigation": {
     "dashboard": "Панель",
     "vault": "Хранилище",
     "settings": "Настройки",
-    "logout": "Выйти"
+    "logout": "Выйти",
+    "login": "Войти",
+    "signup": "Регистрация"
+  },
+  "Landing": {
+    "hero_title": "ИИ-видеорежиссёр без монтажа",
+    "hero_subtitle": "Загрузите сырые кадры. Получите профессиональные рилсы за 90 секунд.",
+    "cta_start": "Начать бесплатно",
+    "cta_demo": "Смотреть демо",
+    "feature_1_title": "Авто-создание",
+    "feature_1_desc": "ИИ выбирает лучшие клипы, подбирает тренды и монтирует ваш рилс.",
+    "feature_2_title": "Режим клонирования",
+    "feature_2_desc": "Извлеките стиль-ДНК любого рилса и воссоздайте его с вашими материалами.",
+    "feature_3_title": "Движок трендов",
+    "feature_3_desc": "Аналитика трендов в реальном времени из Instagram, TikTok и YouTube."
+  },
+  "Dashboard": {
+    "mode_auto": "Авто-создание",
+    "mode_clone": "Режим клонирования",
+    "upload_title": "Загрузить медиа",
+    "upload_subtitle": "MP4, MOV, JPG, PNG, WEBP — необработанные материалы",
+    "upload_inspiration": "Загрузить рилс для вдохновения",
+    "niche_label": "Ниша контента",
+    "generate": "Создать рилс",
+    "generating": "Создаём ваш рилс",
+    "estimated_time": "Примерное время: ~90 секунд",
+    "reel_ready": "Ваш рилс готов!",
+    "reel_export": "Готов для Instagram, TikTok, YouTube Shorts",
+    "download_portrait": "Скачать 9:16",
+    "download_square": "Скачать 1:1",
+    "download_landscape": "Скачать 16:9",
+    "regenerate": "Пересоздать",
+    "share": "Поделиться",
+    "copy_caption": "Копировать описание",
+    "copy_hashtags": "Копировать хештеги"
+  },
+  "Vault": {
+    "title": "Хранилище медиа",
+    "subtitle": "элементов · Оценены и проанализированы",
+    "filter_all": "Все",
+    "filter_videos": "Видео",
+    "filter_photos": "Фото",
+    "sort_score": "По оценке",
+    "sort_size": "По размеру",
+    "create_reel": "Создать рилс"
+  },
+  "Settings": {
+    "title": "Настройки",
+    "tab_billing": "Оплата",
+    "tab_account": "Аккаунт",
+    "tab_preferences": "Предпочтения",
+    "tab_export": "Экспорт",
+    "current_plan": "Текущий план",
+    "credits_remaining": "Осталось кредитов",
+    "upgrade": "Улучшить",
+    "display_name": "Отображаемое имя",
+    "email": "Эл. почта",
+    "timezone": "Часовой пояс",
+    "save_changes": "Сохранить изменения",
+    "danger_zone": "Опасная зона",
+    "delete_account": "Удалить аккаунт",
+    "delete_warning": "Навсегда удалить ваш аккаунт и все данные. Это действие нельзя отменить."
+  },
+  "Auth": {
+    "login_title": "С возвращением",
+    "login_subtitle": "Войдите в аккаунт, чтобы продолжить создание",
+    "signup_title": "Создайте аккаунт",
+    "signup_subtitle": "Начните создавать профессиональные рилсы за 90 секунд",
+    "email_label": "Эл. почта",
+    "password_label": "Пароль",
+    "name_label": "Полное имя",
+    "signing_in": "Вход...",
+    "creating_account": "Создание аккаунта...",
+    "no_account": "Нет аккаунта?",
+    "has_account": "Уже есть аккаунт?"
+  },
+  "Onboarding": {
+    "welcome": "Добро пожаловать в ReelForge!",
+    "personalize": "Настроим ваш опыт. Это займёт 30 секунд.",
+    "lets_go": "Поехали!",
+    "what_create": "Что вы создаёте?",
+    "pick_niches": "Выберите ваши ниши. Это поможет подобрать нужные тренды.",
+    "where_based": "Где вы находитесь?",
+    "region_help": "Мы покажем тренды вашего региона.",
+    "start_creating": "Начать создание"
   }
 }

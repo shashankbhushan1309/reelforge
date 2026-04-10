@@ -1,4 +1,4 @@
-"""ReelForge API — Reels router for reel retrieval and regeneration."""
+"""Reels router for reel retrieval and regeneration."""
 
 import logging
 import secrets

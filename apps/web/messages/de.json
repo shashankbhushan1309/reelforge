@@ -2,12 +2,104 @@
   "Common": {
     "loading": "Wird geladen...",
     "save": "Speichern",
-    "cancel": "Abbrechen"
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "confirm": "Bestätigen",
+    "back": "Zurück",
+    "next": "Weiter",
+    "close": "Schließen",
+    "error": "Etwas ist schiefgelaufen",
+    "success": "Erfolg",
+    "retry": "Erneut versuchen"
   },
   "Navigation": {
     "dashboard": "Dashboard",
     "vault": "Tresor",
     "settings": "Einstellungen",
-    "logout": "Abmelden"
+    "logout": "Abmelden",
+    "login": "Anmelden",
+    "signup": "Registrieren"
+  },
+  "Landing": {
+    "hero_title": "KI-Videoregisseur ohne Schnitt",
+    "hero_subtitle": "Laden Sie Rohmaterial hoch. Erhalten Sie Reels in Profi-Qualität in 90 Sekunden.",
+    "cta_start": "Kostenlos starten",
+    "cta_demo": "Demo ansehen",
+    "feature_1_title": "Auto-Erstellen",
+    "feature_1_desc": "Die KI wählt die besten Clips aus, passt sie an Trends an und schneidet Ihr Reel.",
+    "feature_2_title": "Klon-Modus",
+    "feature_2_desc": "Extrahieren Sie die Stil-DNA eines Reels und erstellen Sie es mit Ihrem eigenen Material nach.",
+    "feature_3_title": "Trend-Engine",
+    "feature_3_desc": "Echtzeit-Trendintelligenz von Instagram, TikTok und YouTube."
+  },
+  "Dashboard": {
+    "mode_auto": "Auto-Erstellen",
+    "mode_clone": "Klon-Modus",
+    "upload_title": "Rohmedien hochladen",
+    "upload_subtitle": "MP4, MOV, JPG, PNG, WEBP — unbearbeitetes Material",
+    "upload_inspiration": "Inspirations-Reel hochladen",
+    "niche_label": "Content-Nische",
+    "generate": "Reel generieren",
+    "generating": "Ihr Reel wird erstellt",
+    "estimated_time": "Geschätzte Zeit: ~90 Sekunden",
+    "reel_ready": "Ihr Reel ist fertig!",
+    "reel_export": "Exportbereit für Instagram, TikTok, YouTube Shorts",
+    "download_portrait": "9:16 herunterladen",
+    "download_square": "1:1 herunterladen",
+    "download_landscape": "16:9 herunterladen",
+    "regenerate": "Neu generieren",
+    "share": "Teilen",
+    "copy_caption": "Beschreibung kopieren",
+    "copy_hashtags": "Hashtags kopieren"
+  },
+  "Vault": {
+    "title": "Medien-Tresor",
+    "subtitle": "Elemente · Bewertet und analysiert",
+    "filter_all": "Alle",
+    "filter_videos": "Videos",
+    "filter_photos": "Fotos",
+    "sort_score": "Nach Bewertung sortieren",
+    "sort_size": "Nach Größe sortieren",
+    "create_reel": "Reel erstellen"
+  },
+  "Settings": {
+    "title": "Einstellungen",
+    "tab_billing": "Abrechnung",
+    "tab_account": "Konto",
+    "tab_preferences": "Präferenzen",
+    "tab_export": "Export",
+    "current_plan": "Aktueller Plan",
+    "credits_remaining": "Verbleibende Credits",
+    "upgrade": "Upgraden",
+    "display_name": "Anzeigename",
+    "email": "E-Mail",
+    "timezone": "Zeitzone",
+    "save_changes": "Änderungen speichern",
+    "danger_zone": "Gefahrenzone",
+    "delete_account": "Konto löschen",
+    "delete_warning": "Ihr Konto und alle Daten dauerhaft löschen. Dies kann nicht rückgängig gemacht werden."
+  },
+  "Auth": {
+    "login_title": "Willkommen zurück",
+    "login_subtitle": "Melden Sie sich an, um weiterzumachen",
+    "signup_title": "Konto erstellen",
+    "signup_subtitle": "Erstellen Sie Reels in Profi-Qualität in 90 Sekunden",
+    "email_label": "E-Mail",
+    "password_label": "Passwort",
+    "name_label": "Vollständiger Name",
+    "signing_in": "Anmeldung...",
+    "creating_account": "Konto wird erstellt...",
+    "no_account": "Noch kein Konto?",
+    "has_account": "Bereits ein Konto?"
+  },
+  "Onboarding": {
+    "welcome": "Willkommen bei ReelForge!",
+    "personalize": "Passen wir Ihr Erlebnis an. Das dauert 30 Sekunden.",
+    "lets_go": "Los geht's!",
+    "what_create": "Was erstellen Sie?",
+    "pick_niches": "Wählen Sie Ihre Nischen. Das hilft uns, die richtigen Trends zu finden.",
+    "where_based": "Wo sind Sie ansässig?",
+    "region_help": "Wir zeigen Ihnen Trends aus Ihrer Region.",
+    "start_creating": "Erstellen beginnen"
   }
 }

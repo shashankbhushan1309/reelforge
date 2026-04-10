@@ -2,12 +2,104 @@
   "Common": {
     "loading": "加载中...",
     "save": "保存",
-    "cancel": "取消"
+    "cancel": "取消",
+    "delete": "删除",
+    "confirm": "确认",
+    "back": "返回",
+    "next": "下一步",
+    "close": "关闭",
+    "error": "出了点问题",
+    "success": "成功",
+    "retry": "重试"
   },
   "Navigation": {
-    "dashboard": "仪表板",
-    "vault": "金库",
+    "dashboard": "仪表盘",
+    "vault": "媒体库",
     "settings": "设置",
-    "logout": "登出"
+    "logout": "退出",
+    "login": "登录",
+    "signup": "注册"
+  },
+  "Landing": {
+    "hero_title": "零编辑AI视频导演",
+    "hero_subtitle": "上传原始素材。90秒获得专业品质短视频。",
+    "cta_start": "免费开始",
+    "cta_demo": "观看演示",
+    "feature_1_title": "自动创建模式",
+    "feature_1_desc": "AI选择最佳片段，匹配趋势，编辑您的短视频。",
+    "feature_2_title": "克隆模式",
+    "feature_2_desc": "提取任何短视频的风格DNA，用您自己的素材重新创建。",
+    "feature_3_title": "趋势引擎",
+    "feature_3_desc": "来自Instagram、TikTok和YouTube的实时趋势情报。"
+  },
+  "Dashboard": {
+    "mode_auto": "自动创建",
+    "mode_clone": "克隆模式",
+    "upload_title": "上传原始媒体",
+    "upload_subtitle": "MP4, MOV, JPG, PNG, WEBP — 未编辑的素材",
+    "upload_inspiration": "上传灵感短视频",
+    "niche_label": "内容领域",
+    "generate": "生成短视频",
+    "generating": "正在创建您的短视频",
+    "estimated_time": "预计时间：约90秒",
+    "reel_ready": "您的短视频已完成！",
+    "reel_export": "可导出至Instagram、TikTok、YouTube Shorts",
+    "download_portrait": "下载9:16",
+    "download_square": "下载1:1",
+    "download_landscape": "下载16:9",
+    "regenerate": "重新生成",
+    "share": "分享",
+    "copy_caption": "复制文案",
+    "copy_hashtags": "复制标签"
+  },
+  "Vault": {
+    "title": "媒体库",
+    "subtitle": "项目 · 已评分和分析",
+    "filter_all": "全部",
+    "filter_videos": "视频",
+    "filter_photos": "照片",
+    "sort_score": "按评分排序",
+    "sort_size": "按大小排序",
+    "create_reel": "创建短视频"
+  },
+  "Settings": {
+    "title": "设置",
+    "tab_billing": "账单",
+    "tab_account": "账号",
+    "tab_preferences": "偏好",
+    "tab_export": "导出",
+    "current_plan": "当前方案",
+    "credits_remaining": "剩余额度",
+    "upgrade": "升级",
+    "display_name": "显示名称",
+    "email": "电子邮件",
+    "timezone": "时区",
+    "save_changes": "保存更改",
+    "danger_zone": "危险操作",
+    "delete_account": "删除账号",
+    "delete_warning": "永久删除您的账号和所有数据。此操作无法撤销。"
+  },
+  "Auth": {
+    "login_title": "欢迎回来",
+    "login_subtitle": "登录您的账号继续创作",
+    "signup_title": "创建账号",
+    "signup_subtitle": "90秒开始创建专业品质短视频",
+    "email_label": "电子邮件",
+    "password_label": "密码",
+    "name_label": "姓名",
+    "signing_in": "登录中...",
+    "creating_account": "创建账号中...",
+    "no_account": "还没有账号？",
+    "has_account": "已有账号？"
+  },
+  "Onboarding": {
+    "welcome": "欢迎来到ReelForge！",
+    "personalize": "让我们个性化您的体验。只需30秒。",
+    "lets_go": "开始吧！",
+    "what_create": "您创作什么内容？",
+    "pick_niches": "选择您的领域。这帮助我们找到最适合的趋势。",
+    "where_based": "您在哪里？",
+    "region_help": "我们将展示您所在地区的趋势。",
+    "start_creating": "开始创作"
   }
 }

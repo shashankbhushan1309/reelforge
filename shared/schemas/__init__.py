@@ -1,4 +1,4 @@
-"""ReelForge AI — Pydantic request/response schemas."""
+"""Pydantic request/response schemas."""
 
 from datetime import datetime
 from uuid import UUID
@@ -7,7 +7,7 @@ from typing import Optional
 from pydantic import BaseModel, EmailStr, Field
 
 
-# ── Auth ──
+
 
 class UserResponse(BaseModel):
     id: UUID
@@ -24,7 +24,7 @@ class UserResponse(BaseModel):
         from_attributes = True
 
 
-# ── Upload ──
+
 
 class UploadInitiateRequest(BaseModel):
     filename: str
@@ -33,12 +33,11 @@ class UploadInitiateRequest(BaseModel):
 
 
 class UploadInitiateResponse(BaseModel):
-    upload_id: str
-    media_item_id: UUID
+    media_id: str
     upload_url: str
 
 
-# ── Jobs ──
+
 
 class CloneJobRequest(BaseModel):
     inspiration_media_id: UUID
@@ -94,7 +93,7 @@ class BlueprintResponse(BaseModel):
     creative_rationale: str = ""
 
 
-# ── Reels ──
+
 
 class ReelResponse(BaseModel):
     id: UUID
@@ -121,7 +120,7 @@ class RegenerateRequest(BaseModel):
     regeneration_number: int = 1
 
 
-# ── Media Vault ──
+
 
 class MediaItemResponse(BaseModel):
     id: UUID
@@ -156,7 +155,7 @@ class MediaSegmentResponse(BaseModel):
         from_attributes = True
 
 
-# ── Trends ──
+
 
 class TrendProfileResponse(BaseModel):
     id: UUID
@@ -179,7 +178,7 @@ class TrendProfileResponse(BaseModel):
         from_attributes = True
 
 
-# ── Style DNA Templates ──
+
 
 class StyleDNATemplateCreate(BaseModel):
     name: str
@@ -206,7 +205,7 @@ class StyleDNATemplateResponse(BaseModel):
         from_attributes = True
 
 
-# ── Pagination ──
+
 
 class PaginatedResponse(BaseModel):
     items: list = []
@@ -216,7 +215,7 @@ class PaginatedResponse(BaseModel):
     pages: int = 1
 
 
-# ── Shot Director ──
+
 
 class ShotInstruction(BaseModel):
     shot_number: int

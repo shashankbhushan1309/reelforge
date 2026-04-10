@@ -2,12 +2,104 @@
   "Common": {
     "loading": "Caricamento...",
     "save": "Salva",
-    "cancel": "Annulla"
+    "cancel": "Annulla",
+    "delete": "Elimina",
+    "confirm": "Conferma",
+    "back": "Indietro",
+    "next": "Avanti",
+    "close": "Chiudi",
+    "error": "Qualcosa è andato storto",
+    "success": "Successo",
+    "retry": "Riprova"
   },
   "Navigation": {
     "dashboard": "Dashboard",
-    "vault": "Cavo",
+    "vault": "Archivio",
     "settings": "Impostazioni",
-    "logout": "Esci"
+    "logout": "Disconnetti",
+    "login": "Accedi",
+    "signup": "Registrati"
+  },
+  "Landing": {
+    "hero_title": "Regista video IA senza montaggio",
+    "hero_subtitle": "Carica le riprese grezze. Ottieni reel di qualità professionale in 90 secondi.",
+    "cta_start": "Inizia gratis",
+    "cta_demo": "Guarda la demo",
+    "feature_1_title": "Modalità Auto-Creazione",
+    "feature_1_desc": "L'IA seleziona i migliori clip, li adatta ai trend e monta il tuo reel.",
+    "feature_2_title": "Modalità Clone",
+    "feature_2_desc": "Estrai il DNA stilistico di qualsiasi reel e ricrealo con il tuo materiale.",
+    "feature_3_title": "Motore dei Trend",
+    "feature_3_desc": "Intelligence sui trend in tempo reale da Instagram, TikTok e YouTube."
+  },
+  "Dashboard": {
+    "mode_auto": "Auto-Creazione",
+    "mode_clone": "Modalità Clone",
+    "upload_title": "Carica media grezzi",
+    "upload_subtitle": "MP4, MOV, JPG, PNG, WEBP — materiale non editato",
+    "upload_inspiration": "Carica reel di ispirazione",
+    "niche_label": "Nicchia di contenuto",
+    "generate": "Genera Reel",
+    "generating": "Creazione del tuo Reel",
+    "estimated_time": "Tempo stimato: ~90 secondi",
+    "reel_ready": "Il tuo Reel è pronto!",
+    "reel_export": "Pronto per Instagram, TikTok, YouTube Shorts",
+    "download_portrait": "Scarica 9:16",
+    "download_square": "Scarica 1:1",
+    "download_landscape": "Scarica 16:9",
+    "regenerate": "Rigenera",
+    "share": "Condividi",
+    "copy_caption": "Copia didascalia",
+    "copy_hashtags": "Copia hashtag"
+  },
+  "Vault": {
+    "title": "Archivio Media",
+    "subtitle": "elementi · Valutati e analizzati",
+    "filter_all": "Tutti",
+    "filter_videos": "Video",
+    "filter_photos": "Foto",
+    "sort_score": "Ordina per punteggio",
+    "sort_size": "Ordina per dimensione",
+    "create_reel": "Crea Reel"
+  },
+  "Settings": {
+    "title": "Impostazioni",
+    "tab_billing": "Fatturazione",
+    "tab_account": "Account",
+    "tab_preferences": "Preferenze",
+    "tab_export": "Esportazione",
+    "current_plan": "Piano attuale",
+    "credits_remaining": "Crediti rimanenti",
+    "upgrade": "Aggiorna",
+    "display_name": "Nome visualizzato",
+    "email": "E-mail",
+    "timezone": "Fuso orario",
+    "save_changes": "Salva modifiche",
+    "danger_zone": "Zona pericolosa",
+    "delete_account": "Elimina account",
+    "delete_warning": "Elimina permanentemente il tuo account e tutti i dati. Questa azione è irreversibile."
+  },
+  "Auth": {
+    "login_title": "Bentornato",
+    "login_subtitle": "Accedi al tuo account per continuare a creare",
+    "signup_title": "Crea il tuo account",
+    "signup_subtitle": "Inizia a creare reel di qualità professionale in 90 secondi",
+    "email_label": "E-mail",
+    "password_label": "Password",
+    "name_label": "Nome completo",
+    "signing_in": "Accesso in corso...",
+    "creating_account": "Creazione account...",
+    "no_account": "Non hai un account?",
+    "has_account": "Hai già un account?"
+  },
+  "Onboarding": {
+    "welcome": "Benvenuto su ReelForge!",
+    "personalize": "Personalizziamo la tua esperienza. Ci vogliono 30 secondi.",
+    "lets_go": "Iniziamo!",
+    "what_create": "Cosa crei?",
+    "pick_niches": "Scegli le tue nicchie. Ci aiuta a trovare i trend giusti per te.",
+    "where_based": "Dove ti trovi?",
+    "region_help": "Ti mostreremo i trend della tua regione.",
+    "start_creating": "Inizia a Creare"
   }
 }

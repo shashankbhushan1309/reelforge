@@ -1,11 +1,4 @@
-"""ReelForge AI — Ingest Worker.
-
-Handles media ingestion:
-- Video: transcode to H.264 1080p 30fps, generate thumbnails
-- Photo: validate, resize, generate thumbnail
-- Store original + processed in R2
-- Push to scene detection queue
-"""
+"""Ingest worker — media transcoding, thumbnail generation, and storage."""
 
 import json
 import logging

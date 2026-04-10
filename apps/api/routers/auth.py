@@ -1,4 +1,4 @@
-"""ReelForge API — Auth router."""
+"""Auth router — user profile, data export, and account deletion."""
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession

@@ -1,8 +1,4 @@
-"""ReelForge API — Upload router.
-
-Handles file upload initiation and direct upload with validation.
-Creates MediaItem records and dispatches to ingest worker.
-"""
+"""Upload router — file upload initiation and direct upload."""
 
 import logging
 import os
@@ -21,7 +17,7 @@ from shared.schemas import UploadInitiateRequest, UploadInitiateResponse
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/v1/upload", tags=["upload"])
+router = APIRouter()
 
 # Supported file types
 ALLOWED_VIDEO_TYPES = {"video/mp4", "video/quicktime", "video/webm", "video/x-msvideo"}
@@ -39,7 +35,7 @@ def _classify_media_type(content_type: str) -> MediaType:
     return MediaType.PHOTO
 
 
-@router.post("/initiate", response_model=UploadInitiateResponse)
+@router.post("/upload/initiate", response_model=UploadInitiateResponse)
 async def initiate_upload(
     request: UploadInitiateRequest,
     user: User = Depends(get_current_user),
@@ -85,7 +81,7 @@ async def initiate_upload(
     )
 
 
-@router.post("/direct")
+@router.post("/upload/direct")
 async def direct_upload(
     file: UploadFile = File(...),
     user: User = Depends(get_current_user),

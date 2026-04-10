@@ -1,1 +1,1 @@
-"""ReelForge API services package."""
+"""API services package."""

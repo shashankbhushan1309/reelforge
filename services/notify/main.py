@@ -1,7 +1,4 @@
-"""ReelForge AI — Notification Service.
-
-Sends push notifications, emails, and webhook events when reels are ready.
-"""
+"""Notification service — job completion alerts."""
 
 import json
 import logging
@@ -40,7 +37,7 @@ def send_notification(job_id: str, notification_type: str = "reel_ready"):
             ).scalar_one_or_none()
 
             if reel:
-                logger.info(f"📧 Notification: Reel ready for user {user.email} (reel: {reel.id})")
+                logger.info(f"Notification: Reel ready for user {user.email} (reel: {reel.id})")
 
                 # In production: send email, push notification, webhooks
                 # email_service.send(
@@ -50,7 +47,7 @@ def send_notification(job_id: str, notification_type: str = "reel_ready"):
                 # )
 
         elif notification_type == "job_failed":
-            logger.info(f"📧 Notification: Job failed for user {user.email} (job: {job.id})")
+            logger.info(f"Notification: Job failed for user {user.email} (job: {job.id})")
 
     except Exception as e:
         logger.error(f"Notification error: {e}")
@@ -72,5 +69,5 @@ def process_notification_queue():
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    logger.info("🚀 Starting Notification Service")
+    logger.info("Starting Notification Service")
     process_notification_queue()

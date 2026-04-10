@@ -1,4 +1,4 @@
-/** ReelForge AI — API client for backend communication */
+/** API client for backend communication */
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -38,7 +38,7 @@ export async function api<T = any>(
   return response.json();
 }
 
-// ── Job API ──
+// Job API
 export const jobsApi = {
   createAuto: (data: { media_ids: string[]; niche?: string; region?: string }, token: string) =>
     api("/api/v1/jobs/auto", { method: "POST", body: data, token }),
@@ -56,7 +56,7 @@ export const jobsApi = {
     api(`/api/v1/jobs/${jobId}/blueprint`, { token }),
 };
 
-// ── Auth API ──
+// Auth API
 export const authApi = {
   me: (token: string) => api("/api/v1/auth/me", { token }),
   updateProfile: (data: { name?: string; locale?: string; timezone?: string }, token: string) =>
@@ -64,19 +64,19 @@ export const authApi = {
   exportData: (token: string) => api("/api/v1/auth/me/export", { token }),
 };
 
-// ── Reel API ──
+// Reel API
 export const reelsApi = {
   get: (reelId: string, token: string) =>
     api(`/api/v1/reels/${reelId}`, { token }),
 
-  regenerate: (reelId: string, token: string) =>
-    api(`/api/v1/reels/${reelId}/regenerate`, { method: "POST", body: { regeneration_number: 1 }, token }),
+  regenerate: (reelId: string, body: { regeneration_number: number }, token: string) =>
+    api(`/api/v1/reels/${reelId}/regenerate`, { method: "POST", body, token }),
 
   share: (reelId: string, token: string) =>
     api(`/api/v1/reels/${reelId}/share`, { method: "POST", token }),
 };
 
-// ── Vault API ──
+// Vault API
 export const vaultApi = {
   list: (params: { page?: number; type?: string; mood?: string }, token: string) => {
     const query = new URLSearchParams();
@@ -87,7 +87,7 @@ export const vaultApi = {
   },
 };
 
-// ── Trends API ──
+// Trends API
 export const trendsApi = {
   list: (params?: { niche?: string; region?: string }) => {
     const query = new URLSearchParams();
@@ -99,7 +99,7 @@ export const trendsApi = {
   niches: () => api("/api/v1/trends/niches"),
 };
 
-// ── Upload API ──
+// Upload API
 export const uploadApi = {
   initiate: (data: { filename: string; file_size: number; content_type: string }, token: string) =>
     api("/api/v1/upload/initiate", { method: "POST", body: data, token }),

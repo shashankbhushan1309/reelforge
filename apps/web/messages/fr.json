@@ -2,12 +2,104 @@
   "Common": {
     "loading": "Chargement...",
     "save": "Enregistrer",
-    "cancel": "Annuler"
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "confirm": "Confirmer",
+    "back": "Retour",
+    "next": "Suivant",
+    "close": "Fermer",
+    "error": "Une erreur est survenue",
+    "success": "Succès",
+    "retry": "Réessayer"
   },
   "Navigation": {
     "dashboard": "Tableau de bord",
-    "vault": "Coffre-fort",
+    "vault": "Coffre",
     "settings": "Paramètres",
-    "logout": "Déconnexion"
+    "logout": "Déconnexion",
+    "login": "Connexion",
+    "signup": "Inscription"
+  },
+  "Landing": {
+    "hero_title": "Réalisateur vidéo IA sans montage",
+    "hero_subtitle": "Déposez vos rushes. Obtenez des reels de qualité pro en 90 secondes.",
+    "cta_start": "Commencer gratuitement",
+    "cta_demo": "Voir la démo",
+    "feature_1_title": "Mode Auto-Création",
+    "feature_1_desc": "L'IA sélectionne les meilleurs clips, les adapte aux tendances et monte votre reel.",
+    "feature_2_title": "Mode Clone",
+    "feature_2_desc": "Extrayez l'ADN stylistique d'un reel et recréez-le avec vos propres rushes.",
+    "feature_3_title": "Moteur de Tendances",
+    "feature_3_desc": "Intelligence des tendances en temps réel d'Instagram, TikTok et YouTube."
+  },
+  "Dashboard": {
+    "mode_auto": "Auto-Création",
+    "mode_clone": "Mode Clone",
+    "upload_title": "Importer des médias bruts",
+    "upload_subtitle": "MP4, MOV, JPG, PNG, WEBP — tout métrage brut",
+    "upload_inspiration": "Importer un reel d'inspiration",
+    "niche_label": "Niche de contenu",
+    "generate": "Générer le Reel",
+    "generating": "Création de votre Reel",
+    "estimated_time": "Temps estimé : ~90 secondes",
+    "reel_ready": "Votre Reel est prêt !",
+    "reel_export": "Prêt pour Instagram, TikTok, YouTube Shorts",
+    "download_portrait": "Télécharger 9:16",
+    "download_square": "Télécharger 1:1",
+    "download_landscape": "Télécharger 16:9",
+    "regenerate": "Régénérer",
+    "share": "Partager",
+    "copy_caption": "Copier la légende",
+    "copy_hashtags": "Copier les hashtags"
+  },
+  "Vault": {
+    "title": "Coffre Média",
+    "subtitle": "éléments · Notés et analysés",
+    "filter_all": "Tout",
+    "filter_videos": "Vidéos",
+    "filter_photos": "Photos",
+    "sort_score": "Trier par score",
+    "sort_size": "Trier par taille",
+    "create_reel": "Créer un Reel"
+  },
+  "Settings": {
+    "title": "Paramètres",
+    "tab_billing": "Facturation",
+    "tab_account": "Compte",
+    "tab_preferences": "Préférences",
+    "tab_export": "Exportation",
+    "current_plan": "Plan actuel",
+    "credits_remaining": "Crédits restants",
+    "upgrade": "Améliorer",
+    "display_name": "Nom d'affichage",
+    "email": "E-mail",
+    "timezone": "Fuseau horaire",
+    "save_changes": "Enregistrer les modifications",
+    "danger_zone": "Zone de danger",
+    "delete_account": "Supprimer le compte",
+    "delete_warning": "Supprimer définitivement votre compte et toutes vos données. Cette action est irréversible."
+  },
+  "Auth": {
+    "login_title": "Bon retour",
+    "login_subtitle": "Connectez-vous pour continuer à créer",
+    "signup_title": "Créez votre compte",
+    "signup_subtitle": "Commencez à créer des reels de qualité pro en 90 secondes",
+    "email_label": "E-mail",
+    "password_label": "Mot de passe",
+    "name_label": "Nom complet",
+    "signing_in": "Connexion en cours...",
+    "creating_account": "Création du compte...",
+    "no_account": "Vous n'avez pas de compte ?",
+    "has_account": "Vous avez déjà un compte ?"
+  },
+  "Onboarding": {
+    "welcome": "Bienvenue sur ReelForge !",
+    "personalize": "Personnalisons votre expérience. Cela prend 30 secondes.",
+    "lets_go": "C'est parti !",
+    "what_create": "Que créez-vous ?",
+    "pick_niches": "Choisissez vos niches. Cela nous aide à trouver les bonnes tendances.",
+    "where_based": "Où êtes-vous basé ?",
+    "region_help": "Nous vous montrerons les tendances de votre région.",
+    "start_creating": "Commencer à Créer"
   }
 }

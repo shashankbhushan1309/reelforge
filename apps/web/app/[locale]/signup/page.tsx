@@ -1,4 +1,4 @@
-/** ReelForge AI — Signup Page */
+/** Signup Page */
 "use client";
 
 import { motion } from "framer-motion";

@@ -1,8 +1,4 @@
-"""ReelForge AI — Scoring Worker.
-
-Extracts keyframes from each video segment, sends to GPT-4o Vision
-for quality scoring, computes composite scores.
-"""
+"""Scoring worker — GPT-4o Vision quality scoring for media segments."""
 
 import base64
 import json
@@ -168,12 +164,14 @@ def score_media(self, job_id: str, media_id: str):
                 if os.path.exists(photo_path):
                     scores = score_frame_with_gpt4o(photo_path)
                     composite = compute_composite_score(scores)
+                else:
+                    scores = _mock_scores()
+                    composite = compute_composite_score(scores)
 
-                # Create a single segment for the photo
                 segment = MediaSegment(
                     media_item_id=media_item.id,
                     start_ms=0,
-                    end_ms=2000,  # Photos default to 2s
+                    end_ms=2000,
                     composite_score=composite,
                     quality_scores=scores,
                     mood_tag=scores.get("mood"),
@@ -182,8 +180,6 @@ def score_media(self, job_id: str, media_id: str):
                     color_temp=scores.get("color_temp", "neutral"),
                 )
                 session.add(segment)
-
-                # Update media mood tags
                 media_item.mood_tags = [scores.get("mood", "neutral")]
 
             session.commit()

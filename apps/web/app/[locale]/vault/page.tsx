@@ -1,4 +1,4 @@
-/** ReelForge AI — Media Vault */
+/** Media Vault */
 "use client";
 
 import { motion } from "framer-motion";

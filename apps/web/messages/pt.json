@@ -2,12 +2,104 @@
   "Common": {
     "loading": "Carregando...",
     "save": "Salvar",
-    "cancel": "Cancelar"
+    "cancel": "Cancelar",
+    "delete": "Excluir",
+    "confirm": "Confirmar",
+    "back": "Voltar",
+    "next": "Próximo",
+    "close": "Fechar",
+    "error": "Algo deu errado",
+    "success": "Sucesso",
+    "retry": "Tentar novamente"
   },
   "Navigation": {
     "dashboard": "Painel",
     "vault": "Cofre",
     "settings": "Configurações",
-    "logout": "Sair"
+    "logout": "Sair",
+    "login": "Entrar",
+    "signup": "Cadastrar"
+  },
+  "Landing": {
+    "hero_title": "Diretor de vídeo IA sem edição",
+    "hero_subtitle": "Envie gravações brutas. Receba reels de qualidade profissional em 90 segundos.",
+    "cta_start": "Comece grátis",
+    "cta_demo": "Ver demo",
+    "feature_1_title": "Modo Auto-Criar",
+    "feature_1_desc": "A IA seleciona os melhores clipes, adapta às tendências e edita seu reel.",
+    "feature_2_title": "Modo Clone",
+    "feature_2_desc": "Extraia o DNA de estilo de qualquer reel e recrie com suas próprias gravações.",
+    "feature_3_title": "Motor de Tendências",
+    "feature_3_desc": "Inteligência de tendências em tempo real do Instagram, TikTok e YouTube."
+  },
+  "Dashboard": {
+    "mode_auto": "Auto-Criar",
+    "mode_clone": "Modo Clone",
+    "upload_title": "Enviar mídia bruta",
+    "upload_subtitle": "MP4, MOV, JPG, PNG, WEBP — gravações sem edição",
+    "upload_inspiration": "Enviar reel de inspiração",
+    "niche_label": "Nicho de conteúdo",
+    "generate": "Gerar Reel",
+    "generating": "Criando seu Reel",
+    "estimated_time": "Tempo estimado: ~90 segundos",
+    "reel_ready": "Seu Reel está pronto!",
+    "reel_export": "Pronto para Instagram, TikTok, YouTube Shorts",
+    "download_portrait": "Baixar 9:16",
+    "download_square": "Baixar 1:1",
+    "download_landscape": "Baixar 16:9",
+    "regenerate": "Regenerar",
+    "share": "Compartilhar",
+    "copy_caption": "Copiar legenda",
+    "copy_hashtags": "Copiar hashtags"
+  },
+  "Vault": {
+    "title": "Cofre de Mídia",
+    "subtitle": "itens · Pontuados e analisados",
+    "filter_all": "Todos",
+    "filter_videos": "Vídeos",
+    "filter_photos": "Fotos",
+    "sort_score": "Ordenar por pontuação",
+    "sort_size": "Ordenar por tamanho",
+    "create_reel": "Criar Reel"
+  },
+  "Settings": {
+    "title": "Configurações",
+    "tab_billing": "Faturamento",
+    "tab_account": "Conta",
+    "tab_preferences": "Preferências",
+    "tab_export": "Exportação",
+    "current_plan": "Plano atual",
+    "credits_remaining": "Créditos restantes",
+    "upgrade": "Atualizar",
+    "display_name": "Nome de exibição",
+    "email": "E-mail",
+    "timezone": "Fuso horário",
+    "save_changes": "Salvar alterações",
+    "danger_zone": "Zona de perigo",
+    "delete_account": "Excluir conta",
+    "delete_warning": "Excluir permanentemente sua conta e todos os dados. Esta ação não pode ser desfeita."
+  },
+  "Auth": {
+    "login_title": "Bem-vindo de volta",
+    "login_subtitle": "Entre na sua conta para continuar criando",
+    "signup_title": "Crie sua conta",
+    "signup_subtitle": "Comece a criar reels de qualidade profissional em 90 segundos",
+    "email_label": "E-mail",
+    "password_label": "Senha",
+    "name_label": "Nome completo",
+    "signing_in": "Entrando...",
+    "creating_account": "Criando conta...",
+    "no_account": "Não tem uma conta?",
+    "has_account": "Já tem uma conta?"
+  },
+  "Onboarding": {
+    "welcome": "Bem-vindo ao ReelForge!",
+    "personalize": "Vamos personalizar sua experiência. Leva 30 segundos.",
+    "lets_go": "Vamos lá!",
+    "what_create": "O que você cria?",
+    "pick_niches": "Escolha seus nichos. Isso nos ajuda a encontrar as tendências certas.",
+    "where_based": "Onde você mora?",
+    "region_help": "Mostraremos tendências da sua região.",
+    "start_creating": "Começar a Criar"
   }
 }

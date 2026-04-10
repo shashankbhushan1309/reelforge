@@ -2,12 +2,104 @@
   "Common": {
     "loading": "Loading...",
     "save": "Save",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "close": "Close",
+    "error": "Something went wrong",
+    "success": "Success",
+    "retry": "Try Again"
   },
   "Navigation": {
     "dashboard": "Dashboard",
     "vault": "Vault",
     "settings": "Settings",
-    "logout": "Log Out"
+    "logout": "Log Out",
+    "login": "Sign In",
+    "signup": "Sign Up"
+  },
+  "Landing": {
+    "hero_title": "Zero-Edit AI Video Director",
+    "hero_subtitle": "Drop raw footage. Get influencer-quality reels in 90 seconds.",
+    "cta_start": "Start Creating Free",
+    "cta_demo": "Watch Demo",
+    "feature_1_title": "Auto-Create Mode",
+    "feature_1_desc": "AI picks the best clips, matches them to trends, and edits your reel.",
+    "feature_2_title": "Clone Mode",
+    "feature_2_desc": "Extract the Style DNA from any reel and recreate it with your own footage.",
+    "feature_3_title": "Trend Engine",
+    "feature_3_desc": "Real-time trend intelligence from Instagram, TikTok, and YouTube."
+  },
+  "Dashboard": {
+    "mode_auto": "Auto-Create",
+    "mode_clone": "Clone Mode",
+    "upload_title": "Upload Raw Media",
+    "upload_subtitle": "MP4, MOV, JPG, PNG, WEBP — any raw, unedited footage",
+    "upload_inspiration": "Upload Inspiration Reel",
+    "niche_label": "Content Niche",
+    "generate": "Generate Reel",
+    "generating": "Creating Your Reel",
+    "estimated_time": "Estimated time: ~90 seconds",
+    "reel_ready": "Your Reel is Ready!",
+    "reel_export": "Export-ready for Instagram, TikTok, YouTube Shorts",
+    "download_portrait": "Download 9:16",
+    "download_square": "Download 1:1",
+    "download_landscape": "Download 16:9",
+    "regenerate": "Regenerate",
+    "share": "Share",
+    "copy_caption": "Copy Caption",
+    "copy_hashtags": "Copy Hashtags"
+  },
+  "Vault": {
+    "title": "Media Vault",
+    "subtitle": "items · Scored & analysed",
+    "filter_all": "All",
+    "filter_videos": "Videos",
+    "filter_photos": "Photos",
+    "sort_score": "Sort by Score",
+    "sort_size": "Sort by Size",
+    "create_reel": "Create Reel"
+  },
+  "Settings": {
+    "title": "Settings",
+    "tab_billing": "Billing",
+    "tab_account": "Account",
+    "tab_preferences": "Preferences",
+    "tab_export": "Export",
+    "current_plan": "Current Plan",
+    "credits_remaining": "Credits Remaining",
+    "upgrade": "Upgrade",
+    "display_name": "Display Name",
+    "email": "Email",
+    "timezone": "Timezone",
+    "save_changes": "Save Changes",
+    "danger_zone": "Danger Zone",
+    "delete_account": "Delete Account",
+    "delete_warning": "Permanently delete your account and all data. This cannot be undone."
+  },
+  "Auth": {
+    "login_title": "Welcome back",
+    "login_subtitle": "Sign in to your account to continue creating",
+    "signup_title": "Create your account",
+    "signup_subtitle": "Start creating influencer-quality reels in 90 seconds",
+    "email_label": "Email",
+    "password_label": "Password",
+    "name_label": "Full name",
+    "signing_in": "Signing in...",
+    "creating_account": "Creating account...",
+    "no_account": "Don't have an account?",
+    "has_account": "Already have an account?"
+  },
+  "Onboarding": {
+    "welcome": "Welcome to ReelForge!",
+    "personalize": "Let's personalize your experience. This takes 30 seconds.",
+    "lets_go": "Let's Go",
+    "what_create": "What do you create?",
+    "pick_niches": "Pick your niches. This helps us find the right trends for you.",
+    "where_based": "Where are you based?",
+    "region_help": "We'll show you trends from your region.",
+    "start_creating": "Start Creating"
   }
 }

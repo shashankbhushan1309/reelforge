@@ -1,9 +1,4 @@
-"""ReelForge AI — Style DNA Extraction Worker.
-
-Clone Mode only. Extracts a multi-dimensional Style DNA fingerprint from
-an inspiration reel: cut pace, color grade, transition types, text energy,
-music BPM, visual motion, and color temperature.
-"""
+"""Style DNA extraction worker for Clone Mode."""
 
 import json
 import logging
@@ -294,7 +289,7 @@ def classify_transitions(video_path: str, scene_boundaries: list) -> dict:
 
 
 @shared_task(name="workers.dna.tasks.extract_dna", bind=True, max_retries=3)
-def extract_dna(self, job_id: str, media_id: str):
+def extract_dna(self, job_id: str, media_id: str, mode: str = "clone"):
     """Extract Style DNA from inspiration reel."""
     logger.info(f"[DNA] Extracting Style DNA from media {media_id} for job {job_id}")
 
@@ -333,16 +328,28 @@ def extract_dna(self, job_id: str, media_id: str):
             scene_boundaries = []
 
         # 2. Color analysis
-        color_data = analyze_color_histogram(video_path)
+        if HAS_CV2:
+            color_data = analyze_color_histogram(video_path)
+        else:
+            color_data = {"color_grade": "natural", "dominant_colors": [], "color_temperature": "neutral"}
 
         # 3. Optical flow
-        motion_data = analyze_optical_flow(video_path)
+        if HAS_CV2:
+            motion_data = analyze_optical_flow(video_path)
+        else:
+            motion_data = {"motion_type": "handheld", "avg_motion_magnitude": 0}
 
         # 4. Text overlay detection
-        text_data = detect_text_overlays(video_path)
+        if HAS_CV2:
+            text_data = detect_text_overlays(video_path)
+        else:
+            text_data = {"text_energy": "low", "texts_per_minute": 0, "text_count": 0, "sample_texts": []}
 
         # 5. Transition classification
-        transition_data = classify_transitions(video_path, scene_boundaries)
+        if HAS_CV2:
+            transition_data = classify_transitions(video_path, scene_boundaries)
+        else:
+            transition_data = {"dominant_transition": "hard_cut", "transitions": [], "transition_variety": 0}
 
         # 6. Audio analysis
         audio_data = {"bpm": 120}
@@ -377,7 +384,23 @@ def extract_dna(self, job_id: str, media_id: str):
         job.progress = 50
         session.commit()
 
-        # Push to blueprint generation
+        # Check if user media is done before pushing to blueprint
+        from sqlalchemy import func
+        from shared.models import MediaItem, MediaStatus
+        media_ids = job.media_ids or []
+        if media_ids:
+            ready_count = session.execute(
+                select(func.count()).select_from(MediaItem).where(
+                    MediaItem.id.in_(media_ids),
+                    MediaItem.status == MediaStatus.READY,
+                )
+            ).scalar() or 0
+            if ready_count < len(media_ids):
+                logger.info(f"[DNA] Waiting for user media ({ready_count}/{len(media_ids)} ready)")
+                job.status = JobStatus.ANALYSING
+                session.commit()
+                return
+
         job.status = JobStatus.GENERATING_BLUEPRINT
         session.commit()
 

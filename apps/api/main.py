@@ -1,4 +1,4 @@
-"""ReelForge AI — FastAPI Application."""
+"""FastAPI application entry point."""
 
 import logging
 from contextlib import asynccontextmanager
@@ -16,9 +16,9 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan — startup and shutdown events."""
-    logger.info("🎬 ReelForge AI API starting up...")
+    logger.info("API starting up...")
     yield
-    logger.info("🎬 ReelForge AI API shutting down...")
+    logger.info("API shutting down...")
 
 
 def create_app() -> FastAPI:

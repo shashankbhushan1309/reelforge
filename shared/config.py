@@ -1,4 +1,4 @@
-"""ReelForge shared configuration — loads all settings from environment variables."""
+"""Shared configuration — loads settings from environment variables."""
 
 import os
 from dataclasses import dataclass, field

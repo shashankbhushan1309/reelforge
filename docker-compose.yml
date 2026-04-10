@@ -1,9 +1,7 @@
-# ═══════════════════════════════════════════════════════
 # ReelForge AI — Docker Compose (Local Development)
-# ═══════════════════════════════════════════════════════
 
 services:
-  # ── Database ──
+  # Database
   postgres:
     image: pgvector/pgvector:pg16
     container_name: reelforge-postgres
@@ -21,7 +19,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # ── Redis ──
+  # Redis
   redis:
     image: redis:7-alpine
     container_name: reelforge-redis
@@ -35,7 +33,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # ── FastAPI Backend ──
+  # FastAPI Backend
   api:
     build:
       context: .
@@ -58,7 +56,7 @@ services:
       - ./shared:/app/shared
       - ./uploads:/app/uploads
 
-  # ── Celery Workers ──
+  # Celery Workers
   ingest-worker:
     build:
       context: .
@@ -201,7 +199,7 @@ services:
       - ./shared:/app/shared
       - ./uploads:/app/uploads
 
-  # ── Trend Pulse Service ──
+  # Trend Pulse Service
   trend-service:
     build:
       context: .
@@ -218,7 +216,7 @@ services:
       - ./services/trend:/app/services/trend
       - ./shared:/app/shared
 
-  # ── Notify Service ──
+  # Notify Service
   notify-service:
     build:
       context: .
@@ -237,7 +235,7 @@ services:
       - ./services/notify:/app/services/notify
       - ./shared:/app/shared
 
-  # ── Next.js Frontend ──
+  # Next.js Frontend
   web:
     build:
       context: ./apps/web

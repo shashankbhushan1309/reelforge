@@ -1,4 +1,4 @@
-"""ReelForge API — Middleware: Redis-backed rate limiting + RFC 7807 error handling."""
+"""Redis-backed rate limiting and RFC 7807 error responses."""
 
 import logging
 import time
@@ -13,7 +13,7 @@ from shared.config import get_settings
 logger = logging.getLogger(__name__)
 
 
-# ── Redis-backed Rate Limiter ──
+
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
     """Token-bucket rate limiting backed by Redis for multi-worker correctness.
@@ -42,7 +42,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 self._redis = False  # sentinel: don't retry
         return self._redis if self._redis is not False else None
 
-    async def _is_rate_limited_redis(self, key: str, redis_conn) -> bool:
+    async def _is_rate_limited_redis(self, key: str, redis_conn, rpm: int = 60) -> bool:
         """Sliding-window rate limit via Redis sorted set."""
         now = time.time()
         window_start = now - 60
@@ -55,9 +55,9 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         results = await pipe.execute()
 
         count = results[2]
-        return count > self.rpm
+        return count > rpm
 
-    def _is_rate_limited_memory(self, key: str) -> bool:
+    def _is_rate_limited_memory(self, key: str, rpm: int = 60) -> bool:
         """Fallback in-memory sliding window."""
         now = time.time()
         window_start = now - 60
@@ -68,25 +68,27 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         self._fallback[key] = [t for t in self._fallback[key] if t > window_start]
         self._fallback[key].append(now)
 
-        return len(self._fallback[key]) > self.rpm
+        return len(self._fallback[key]) > rpm
 
     async def dispatch(self, request: Request, call_next):
-        # Skip rate limiting for health checks and webhooks
+        # skip health checks and webhook callbacks
         path = request.url.path
-        if path in ("/health", "/api/v1/webhooks/stripe"):
+        if path in ("/health", "/api/v1/webhooks/stripe", "/docs", "/redoc", "/openapi.json"):
             return await call_next(request)
 
-        # Determine client key
         forwarded = request.headers.get("x-forwarded-for")
         client_ip = forwarded.split(",")[0].strip() if forwarded else (request.client.host if request.client else "unknown")
-        rate_key = f"rl:{client_ip}:{path}"
+        rate_key = f"rl:{client_ip}"
 
-        # Check rate limit
+        # authenticated users get a higher limit
+        has_auth = "authorization" in request.headers
+        effective_rpm = 300 if has_auth else self.rpm
+
         redis_conn = await self._get_redis()
         if redis_conn:
-            limited = await self._is_rate_limited_redis(rate_key, redis_conn)
+            limited = await self._is_rate_limited_redis(rate_key, redis_conn, effective_rpm)
         else:
-            limited = self._is_rate_limited_memory(rate_key)
+            limited = self._is_rate_limited_memory(rate_key, effective_rpm)
 
         if limited:
             return JSONResponse(
@@ -95,14 +97,14 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                     "type": "about:blank",
                     "title": "Too Many Requests",
                     "status": 429,
-                    "detail": f"Rate limit exceeded. Max {self.rpm} requests/minute.",
+                    "detail": f"Rate limit exceeded. Max {effective_rpm} requests/minute.",
                 },
             )
 
         return await call_next(request)
 
 
-# ── Exception Handlers (RFC 7807) ──
+
 
 async def http_exception_handler(request: Request, exc):
     """Return RFC 7807 Problem JSON for HTTP exceptions."""
@@ -143,3 +145,13 @@ async def validation_exception_handler(request: Request, exc):
             "errors": exc.errors() if hasattr(exc, "errors") else [],
         },
     )
+
+
+def setup_exception_handlers(app: FastAPI):
+    """Register all exception handlers on the app."""
+    from fastapi.exceptions import RequestValidationError
+    from starlette.exceptions import HTTPException as StarletteHTTPException
+
+    app.add_exception_handler(StarletteHTTPException, http_exception_handler)
+    app.add_exception_handler(RequestValidationError, validation_exception_handler)
+    app.add_exception_handler(Exception, generic_exception_handler)

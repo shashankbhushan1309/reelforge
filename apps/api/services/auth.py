@@ -1,4 +1,4 @@
-"""ReelForge API — Auth service for JWT verification with Supabase."""
+"""Auth service for JWT verification with Supabase."""
 
 import logging
 from typing import Optional

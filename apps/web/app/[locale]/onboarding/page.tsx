@@ -1,4 +1,4 @@
-/** ReelForge AI — Onboarding Page */
+/** Onboarding Page */
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
@@ -49,11 +49,25 @@ export default function OnboardingPage() {
     );
   };
 
-  const handleComplete = () => {
-    if (selectedNiches.length > 0) {
-      setNiche(selectedNiches[0]);
-    }
+  const handleComplete = async () => {
+    const primaryNiche = selectedNiches.length > 0 ? selectedNiches[0] : "Lifestyle";
+    setNiche(primaryNiche);
     setRegion(selectedRegion);
+
+    // Persist selections to backend
+    const token = useAppStore.getState().token;
+    if (token) {
+      try {
+        const { authApi } = await import("@/lib/api");
+        await authApi.updateProfile(
+          { name: undefined, locale: undefined, timezone: selectedRegion },
+          token,
+        );
+      } catch (err) {
+        console.error("Failed to save onboarding preferences:", err);
+      }
+    }
+
     router.push("/dashboard");
   };
 

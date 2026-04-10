@@ -1,8 +1,4 @@
-"""ReelForge AI — SQLAlchemy ORM Models.
-
-All tables use UUID v4 primary keys and UTC timestamps.
-JSONB columns for flexible metadata storage.
-"""
+"""SQLAlchemy ORM models."""
 
 import uuid
 from datetime import datetime, timezone
@@ -36,7 +32,7 @@ def new_uuid():
     return uuid.uuid4()
 
 
-# ── Enums ──
+
 
 import enum
 
@@ -78,7 +74,7 @@ class JobStatus(str, enum.Enum):
     FAILED = "failed"
 
 
-# ── Models ──
+
 
 
 class User(Base):

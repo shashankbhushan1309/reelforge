@@ -1,8 +1,4 @@
-"""ReelForge AI — Trend Pulse Service.
-
-Scheduled service that updates trend profiles every 6 hours.
-Fetches social signals and uses Claude to extract structured TrendProfiles.
-"""
+"""Trend Pulse service — 6-hourly trend profile updates."""
 
 import json
 import logging
@@ -180,7 +176,7 @@ def seed_trends():
 
 def update_trends():
     """Fetch and update trend profiles (runs every 6 hours)."""
-    logger.info("🔄 Updating trend profiles...")
+    logger.info(f"Updating trend profiles...")
 
     session = SyncSessionLocal()
     settings = get_settings()
@@ -204,7 +200,7 @@ def update_trends():
         if count == 0:
             seed_trends()
 
-        logger.info(f"✅ Trend update complete. {count} active trends.")
+        logger.info(f"Trend update complete. {count} active trends.")
 
     except Exception as e:
         logger.error(f"Trend update failed: {e}")
@@ -213,18 +209,18 @@ def update_trends():
         session.close()
 
 
-# ── Standalone FastAPI app for the trend service ──
-
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from sqlalchemy import select
 
-trend_app = FastAPI(title="ReelForge Trend Pulse Service", version="0.1.0")
 
-
-@trend_app.on_event("startup")
-async def startup():
-    """Seed initial trends and start scheduler."""
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     seed_trends()
+    yield
+
+
+trend_app = FastAPI(title="ReelForge Trend Pulse Service", version="0.1.0", lifespan=lifespan)
 
 
 @trend_app.get("/health")
@@ -235,7 +231,7 @@ async def health():
 if __name__ == "__main__":
     # Run as standalone scheduler
     logging.basicConfig(level=logging.INFO)
-    logger.info("🚀 Starting Trend Pulse Service")
+    logger.info("Starting Trend Pulse Service")
 
     # Seed initial data
     seed_trends()
@@ -243,7 +239,7 @@ if __name__ == "__main__":
     # Start scheduler
     scheduler = BlockingScheduler()
     scheduler.add_job(update_trends, "interval", hours=6)
-    logger.info("📅 Scheduled trend updates every 6 hours")
+    logger.info("Scheduled trend updates every 6 hours")
 
     try:
         scheduler.start()

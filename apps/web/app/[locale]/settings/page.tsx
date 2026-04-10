@@ -1,4 +1,4 @@
-/** ReelForge AI — Settings Page */
+/** Settings Page */
 "use client";
 
 import { motion } from "framer-motion";
@@ -162,7 +162,24 @@ export default function SettingsPage() {
                 <p className="text-xs text-[var(--color-text-muted)] mb-3">
                   Permanently delete your account and all data. This cannot be undone.
                 </p>
-                <button className="px-4 py-2 rounded-xl border border-[var(--color-error)] text-[var(--color-error)] text-sm hover:bg-[var(--color-error)]/10 transition-colors">
+                <button
+                  className="px-4 py-2 rounded-xl border border-[var(--color-error)] text-[var(--color-error)] text-sm hover:bg-[var(--color-error)]/10 transition-colors"
+                  onClick={async () => {
+                    if (!confirm("Are you sure you want to delete your account? This action cannot be undone.")) return;
+                    if (!confirm("This will permanently delete ALL your reels, media, and data. Type DELETE to confirm.")) return;
+                    try {
+                      await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/v1/auth/me`, {
+                        method: "DELETE",
+                        headers: { Authorization: `Bearer ${token}` },
+                      });
+                      useAppStore.getState().setToken(null);
+                      useAppStore.getState().setUser(null);
+                      window.location.href = "/";
+                    } catch (err: any) {
+                      alert("Failed to delete account: " + err.message);
+                    }
+                  }}
+                >
                   Delete Account
                 </button>
               </div>

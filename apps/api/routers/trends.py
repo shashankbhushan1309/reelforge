@@ -1,4 +1,4 @@
-"""ReelForge API — Trends router for Trend Pulse data."""
+"""Trends router for Trend Pulse data."""
 
 import logging
 from typing import Optional
@@ -50,6 +50,8 @@ async def list_trends(
         count_query = count_query.where(TrendProfile.niche == niche)
     if region:
         count_query = count_query.where(TrendProfile.region == region)
+    if min_energy:
+        count_query = count_query.where(TrendProfile.energy_level >= min_energy)
 
     count_result = await db.execute(count_query)
     total = count_result.scalar() or 0

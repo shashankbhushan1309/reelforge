@@ -1,4 +1,4 @@
-"""ReelForge API — Job orchestration service."""
+"""Job orchestration service."""
 
 import logging
 from uuid import UUID

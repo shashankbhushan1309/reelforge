@@ -1,4 +1,4 @@
-"""ReelForge API — Media Vault router."""
+"""Media vault router — user media management."""
 
 import logging
 from uuid import UUID
@@ -138,13 +138,16 @@ async def delete_media_item(
     if not item:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Media item not found")
 
-    # Delete from R2 storage
-    from shared.storage import get_storage
-    storage = get_storage()
-    if item.r2_key:
-        storage.delete_file(item.r2_key)
-    if item.r2_thumb_key:
-        storage.delete_file(item.r2_thumb_key)
+    # clean up remote storage
+    try:
+        from shared.storage import get_storage
+        storage = get_storage()
+        if item.r2_key:
+            storage.delete_file(item.r2_key)
+        if item.r2_thumb_key:
+            storage.delete_file(item.r2_thumb_key)
+    except Exception as e:
+        logger.warning(f"R2 cleanup failed for {media_id}: {e}")
 
     await db.delete(item)
     await db.commit()
