@@ -6,6 +6,7 @@ from typing import Optional
 
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from shared.models import Job, JobStatus, JobMode, MediaItem, MediaSegment, Reel, User
 from shared.schemas import JobResponse, JobDetailResponse
@@ -79,9 +80,11 @@ class JobService:
         return job
 
     async def get_job(self, job_id: UUID, user_id: UUID) -> Optional[Job]:
-        """Get a job by ID, scoped to user."""
+        """Get a job by ID, scoped to user. Eagerly loads the related reel."""
         result = await self.db.execute(
-            select(Job).where(Job.id == job_id, Job.user_id == user_id)
+            select(Job)
+            .options(selectinload(Job.reel))
+            .where(Job.id == job_id, Job.user_id == user_id)
         )
         return result.scalar_one_or_none()
 

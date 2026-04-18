@@ -66,6 +66,7 @@ class JobResponse(BaseModel):
 
 
 class JobDetailResponse(JobResponse):
+    reel_id: Optional[UUID] = None
     style_dna: Optional[dict] = None
     blueprint: Optional[dict] = None
     captions: Optional[dict] = None

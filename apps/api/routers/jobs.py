@@ -121,12 +121,21 @@ async def get_job(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Poll job status. Returns status, progress %, and current stage."""
+    """Poll job status. Returns status, progress %, and current stage.
+
+    When `status` is `completed`, `reel_id` is populated so the client
+    can immediately call `GET /api/v1/reels/{reel_id}` to fetch download URLs.
+    """
     service = JobService(db)
     job = await service.get_job(job_id, user.id)
     if not job:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
-    return job
+
+    # Build response and inject reel_id from the eagerly-loaded relationship.
+    response = JobDetailResponse.model_validate(job)
+    if job.reel is not None:
+        response.reel_id = job.reel.id
+    return response
 
 
 @router.get("/jobs/{job_id}/blueprint", response_model=BlueprintResponse)
