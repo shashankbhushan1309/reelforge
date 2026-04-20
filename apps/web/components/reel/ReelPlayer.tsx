@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import Hls from "hls.js";
 
 interface ReelPlayerProps {
   src: string;
@@ -14,40 +13,23 @@ export function ReelPlayer({ src, poster, autoPlay = false }: ReelPlayerProps) {
 
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video || !src) return;
 
-    let hls: Hls;
+    video.src = src;
+    video.load();
 
-    if (src.endsWith(".m3u8") && Hls.isSupported()) {
-      hls = new Hls({
-        capLevelToPlayerSize: true,
-        maxBufferLength: 30,
-      });
-
-      hls.loadSource(src);
-      hls.attachMedia(video);
-
-      hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        if (autoPlay) {
-          video.play().catch((e) => console.log("Auto-play prevented", e));
-        }
-      });
-    } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-      // For Safari native HLS
-      video.src = src;
-      if (autoPlay) {
-        video.play().catch((e) => console.log("Auto-play prevented", e));
-      }
-    } else {
-      // Fallback for direct MP4
-      video.src = src;
+    if (autoPlay) {
+      // Wait until the browser has enough metadata before attempting play,
+      // otherwise we get an AbortError on slow connections.
+      const onCanPlay = () => {
+        video.play().catch((e) => {
+          // Auto-play is blocked by browser policy on some devices — that's OK.
+          console.log("Auto-play prevented:", e);
+        });
+      };
+      video.addEventListener("canplay", onCanPlay, { once: true });
+      return () => video.removeEventListener("canplay", onCanPlay);
     }
-
-    return () => {
-      if (hls) {
-        hls.destroy();
-      }
-    };
   }, [src, autoPlay]);
 
   return (
@@ -57,6 +39,7 @@ export function ReelPlayer({ src, poster, autoPlay = false }: ReelPlayerProps) {
         poster={poster}
         controls
         playsInline
+        muted={autoPlay} // muted is required for autoplay to work in most browsers
         className="w-full h-full object-cover"
       />
     </div>

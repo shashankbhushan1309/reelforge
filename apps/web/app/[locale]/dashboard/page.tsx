@@ -431,9 +431,10 @@ export default function DashboardPage() {
 
               {/* Preview Placeholder or Real Player */}
               <div className="aspect-[9/16] max-w-xs mx-auto bg-black rounded-2xl mb-6 flex items-center justify-center border border-[var(--color-border)] overflow-hidden">
-                {reelData?.r2_key ? (
-                  <ReelPlayer 
-                    src={`/api/v1/reels/${reelData.id}/stream`} 
+                {reelData?.download_url ? (
+                  <ReelPlayer
+                    src={reelData.download_url}
+                    poster={reelData.thumbnail_url || undefined}
                     autoPlay={true}
                   />
                 ) : (
