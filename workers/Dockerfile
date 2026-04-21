@@ -16,11 +16,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY workers/requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy shared packages
+# Copy shared packages and worker code
 COPY shared/ /app/shared/
-
-# Copy worker code
 COPY workers/ /app/workers/
+
+# Copy utility scripts (includes the LUT generator)
+COPY scripts/ /app/scripts/
+
+# Generate color-grading LUT files at build time so they exist on disk
+# before any assembly worker starts. Output: /app/luts/{moody,warm_cinematic,
+# bright_pop,dark_dramatic}.cube  (identity "natural" needs no file).
+ENV LUT_DIR=/app/luts
+RUN python3 /app/scripts/generate_luts.py
 
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
