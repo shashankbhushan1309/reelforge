@@ -33,8 +33,21 @@ class UploadInitiateRequest(BaseModel):
 
 
 class UploadInitiateResponse(BaseModel):
+    upload_id: str
     media_id: str
+    media_item_id: UUID
     upload_url: str
+
+
+class DirectUploadResponse(BaseModel):
+    media_id: str
+    filename: str
+    type: str
+    size_bytes: int
+    status: str
+
+    class Config:
+        from_attributes = True
 
 
 

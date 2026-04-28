@@ -13,7 +13,7 @@ from apps.api.services.auth import get_current_user
 from shared.config import get_settings
 from shared.models import MediaItem, MediaType, MediaStatus, User
 from shared.models.database import get_async_session as get_db
-from shared.schemas import UploadInitiateRequest, UploadInitiateResponse
+from shared.schemas import UploadInitiateRequest, UploadInitiateResponse, DirectUploadResponse
 
 logger = logging.getLogger(__name__)
 
@@ -75,13 +75,18 @@ async def initiate_upload(
 
     logger.info(f"Upload initiated: {media_item.id} ({request.filename}, {request.file_size} bytes)")
 
+    # Generate a unique upload session ID for tus resumable tracking
+    upload_id = uuid.uuid4().hex
+
     return UploadInitiateResponse(
+        upload_id=upload_id,
         media_id=str(media_item.id),
+        media_item_id=media_item.id,
         upload_url=upload_url,
     )
 
 
-@router.post("/upload/direct")
+@router.post("/upload/direct", response_model=DirectUploadResponse)
 async def direct_upload(
     file: UploadFile = File(...),
     user: User = Depends(get_current_user),
@@ -151,10 +156,10 @@ async def direct_upload(
 
     logger.info(f"Direct upload complete: {media_item.id} ({file.filename}, {file_size} bytes)")
 
-    return {
-        "media_id": str(media_item.id),
-        "filename": unique_filename,
-        "type": media_type.value,
-        "size_bytes": file_size,
-        "status": media_item.status.value,
-    }
+    return DirectUploadResponse(
+        media_id=str(media_item.id),
+        filename=unique_filename,
+        type=media_type.value,
+        size_bytes=file_size,
+        status=media_item.status.value,
+    )
