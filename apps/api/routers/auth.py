@@ -6,7 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
 from shared.models import User, Job, Reel, MediaItem
 from shared.schemas import UserResponse
-from apps.api.services.auth import get_current_user, get_db
+from apps.api.services.auth import get_current_user
+from shared.models.database import get_async_session as get_db
 
 router = APIRouter()
 

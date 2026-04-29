@@ -10,7 +10,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from shared.models import User, MediaItem, MediaSegment, MediaType, MediaStatus
 from shared.schemas import MediaItemResponse, MediaSegmentResponse, PaginatedResponse
-from apps.api.services.auth import get_current_user, get_db
+from apps.api.services.auth import get_current_user
+from shared.models.database import get_async_session as get_db
 
 logger = logging.getLogger(__name__)
 

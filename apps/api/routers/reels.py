@@ -12,7 +12,8 @@ from shared.models import User, Reel, Job, JobStatus, JobMode
 from shared.schemas import ReelResponse, RegenerateRequest, JobResponse
 from shared.queue import get_queue, QUEUE_ASSEMBLE
 from shared.config import get_settings
-from apps.api.services.auth import get_current_user, get_db
+from apps.api.services.auth import get_current_user
+from shared.models.database import get_async_session as get_db
 
 logger = logging.getLogger(__name__)
 

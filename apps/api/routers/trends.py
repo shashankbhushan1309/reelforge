@@ -9,7 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from shared.models import TrendProfile
 from shared.schemas import TrendProfileResponse, PaginatedResponse
-from apps.api.services.auth import get_current_user, get_optional_user, get_db
+from apps.api.services.auth import get_current_user, get_optional_user
+from shared.models.database import get_async_session as get_db
 from shared.models import User
 
 logger = logging.getLogger(__name__)
