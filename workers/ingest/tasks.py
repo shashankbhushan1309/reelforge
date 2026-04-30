@@ -208,10 +208,15 @@ def process_media(self, job_id: str, media_id: str):
             media_item.status = MediaStatus.READY
             session.commit()
 
-        # Push to scene detection queue (for videos)
+        # Push to next pipeline stage
         if media_item.type == MediaType.VIDEO:
+            # Videos: scene detection → scoring → audio → ...
             from workers.scene.tasks import detect_scenes
             detect_scenes.delay(job_id, media_id)
+        else:
+            # Photos: skip scene detection, go straight to scoring
+            from workers.scoring.tasks import score_media
+            score_media.delay(job_id, media_id)
 
         logger.info(f"[Ingest] Completed processing media {media_id}")
 
