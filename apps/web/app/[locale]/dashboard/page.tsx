@@ -476,11 +476,13 @@ export default function DashboardPage() {
                   onClick={async () => {
                     if (!reelData?.id || !token) return;
                     try {
-                      await reelsApi.regenerate(reelData.id, { regeneration_number: 1 }, token);
+                      const newJob = await reelsApi.regenerate(reelData.id, { regeneration_number: 1 }, token);
+                      setReelData(null);
                       setReelReady(false);
                       setIsGenerating(true);
                       setProgress(55);
                       setCurrentStage("generating_blueprint");
+                      setActiveJobId(newJob.id);
                     } catch (err: any) {
                       alert(err.message || "Regeneration failed");
                     }
