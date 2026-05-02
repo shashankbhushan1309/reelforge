@@ -508,7 +508,7 @@ export default function DashboardPage() {
                 <button
                   className="btn-secondary !text-sm"
                   onClick={() => {
-                    const text = reelData?.captions?.text || "";
+                    const text = reelData?.captions?.caption || "";
                     navigator.clipboard.writeText(text);
                     alert("Caption copied!");
                   }}
@@ -532,7 +532,7 @@ export default function DashboardPage() {
                 <div className="mt-6 p-4 rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)]">
                   <h4 className="text-sm font-medium mb-2">Generated Caption</h4>
                   <p className="text-sm text-[var(--color-text-secondary)] whitespace-pre-wrap">
-                    {reelData.captions.text}
+                    {reelData.captions.caption}
                   </p>
                   {reelData.captions.hashtags && (
                     <p className="text-sm text-[var(--color-primary-light)] mt-2">
