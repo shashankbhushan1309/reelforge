@@ -24,12 +24,23 @@ TIER_CREDITS = {
     UserTier.ENTERPRISE: 999999,
 }
 
-# Stripe price_id → tier mapping (configure these in .env or here)
-PRICE_TO_TIER = {
-    "price_creator_monthly": UserTier.CREATOR,
-    "price_pro_monthly": UserTier.PRO,
-    "price_studio_monthly": UserTier.STUDIO,
-}
+# Stripe price_id → tier mapping (built from STRIPE_PRICE_* env vars)
+def _build_price_to_tier() -> dict:
+    """Build price-to-tier map from settings so it stays in sync with Stripe."""
+    settings = get_settings()
+    mapping = {}
+    if settings.stripe.price_creator:
+        mapping[settings.stripe.price_creator] = UserTier.CREATOR
+    if settings.stripe.price_pro:
+        mapping[settings.stripe.price_pro] = UserTier.PRO
+    if settings.stripe.price_studio:
+        mapping[settings.stripe.price_studio] = UserTier.STUDIO
+    return mapping
+
+
+def get_price_to_tier() -> dict:
+    """Get cached price-to-tier mapping."""
+    return _build_price_to_tier()
 
 
 @router.post("/webhooks/stripe")
@@ -99,7 +110,7 @@ async def _handle_checkout_completed(db: AsyncSession, data: dict):
             import stripe
             sub = stripe.Subscription.retrieve(subscription_id)
             price_id = sub["items"]["data"][0]["price"]["id"] if sub.get("items") else None
-            tier = PRICE_TO_TIER.get(price_id, UserTier.CREATOR)
+            tier = get_price_to_tier().get(price_id, UserTier.CREATOR)
         except Exception:
             tier = UserTier.CREATOR
     else:
@@ -128,7 +139,7 @@ async def _handle_subscription_updated(db: AsyncSession, data: dict):
     items = data.get("items", {}).get("data", [])
     if items:
         price_id = items[0].get("price", {}).get("id")
-        new_tier = PRICE_TO_TIER.get(price_id, user.tier)
+        new_tier = get_price_to_tier().get(price_id, user.tier)
 
         if new_tier != user.tier:
             old_tier = user.tier
