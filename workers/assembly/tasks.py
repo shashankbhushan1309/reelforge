@@ -417,20 +417,63 @@ def assemble_reel(self, job_id: str):
             for slot in slots:
                 slot_output = os.path.join(tmpdir, f"slot_{slot['slot_id']}.mp4")
 
-                # Find source media
-                segment = session.execute(
-                    select(MediaSegment).where(MediaSegment.id == UUID(slot["media_id"]))
-                ).scalar_one_or_none()
-
-                if not segment:
-                    logger.warning(f"Segment {slot['media_id']} not found, skipping slot")
+                # Find source media — media_id may reference a MediaSegment or a MediaItem
+                raw_media_id = slot.get("media_id")
+                if not raw_media_id:
+                    logger.warning(f"Slot {slot.get('slot_id')} has no media_id, skipping")
                     continue
 
-                media_item = session.execute(
-                    select(MediaItem).where(MediaItem.id == segment.media_item_id)
+                try:
+                    lookup_id = UUID(str(raw_media_id))
+                except (ValueError, AttributeError):
+                    logger.warning(
+                        f"Slot {slot.get('slot_id')} has invalid media_id "
+                        f"'{raw_media_id}', skipping"
+                    )
+                    continue
+
+                # Strategy 1: Try as MediaSegment.id (preferred — segment-level precision)
+                segment = session.execute(
+                    select(MediaSegment).where(MediaSegment.id == lookup_id)
                 ).scalar_one_or_none()
 
+                if segment:
+                    media_item = session.execute(
+                        select(MediaItem).where(MediaItem.id == segment.media_item_id)
+                    ).scalar_one_or_none()
+                else:
+                    # Strategy 2: Try as MediaItem.id and pick the best-scored segment
+                    media_item = session.execute(
+                        select(MediaItem).where(MediaItem.id == lookup_id)
+                    ).scalar_one_or_none()
+
+                    if media_item:
+                        segment = session.execute(
+                            select(MediaSegment)
+                            .where(MediaSegment.media_item_id == media_item.id)
+                            .order_by(
+                                MediaSegment.composite_score.desc().nullslast()
+                            )
+                            .limit(1)
+                        ).scalar_one_or_none()
+                        if segment:
+                            logger.info(
+                                f"Slot {slot.get('slot_id')}: media_id resolved "
+                                f"as MediaItem, using best segment {segment.id}"
+                            )
+
+                if not segment:
+                    logger.warning(
+                        f"Slot {slot.get('slot_id')}: media_id '{raw_media_id}' "
+                        f"not found as segment or media item, skipping"
+                    )
+                    continue
+
                 if not media_item:
+                    logger.warning(
+                        f"Slot {slot.get('slot_id')}: parent MediaItem not found "
+                        f"for segment {segment.id}, skipping"
+                    )
                     continue
 
                 source_path = _get_source_path(session, segment, media_item)
