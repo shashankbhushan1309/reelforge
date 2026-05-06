@@ -10,12 +10,33 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from shared.models import User, MediaItem, MediaSegment, MediaType, MediaStatus
 from shared.schemas import MediaItemResponse, MediaSegmentResponse, PaginatedResponse
+from shared.config import get_settings
 from apps.api.services.auth import get_current_user
 from shared.models.database import get_async_session as get_db
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+def build_media_item_response(item: MediaItem) -> MediaItemResponse:
+    """Build media item response with CDN thumbnail URL."""
+    settings = get_settings()
+    base_url = settings.r2.public_url
+
+    return MediaItemResponse(
+        id=item.id,
+        type=item.type.value if hasattr(item.type, "value") else str(item.type),
+        filename=item.filename,
+        duration_ms=item.duration_ms,
+        width=item.width,
+        height=item.height,
+        size_bytes=item.size_bytes,
+        status=item.status.value if hasattr(item.status, "value") else str(item.status),
+        mood_tags=item.mood_tags or [],
+        thumbnail_url=f"{base_url}/{item.r2_thumb_key}" if item.r2_thumb_key else None,
+        created_at=item.created_at,
+    )
 
 
 @router.get("/vault", response_model=PaginatedResponse)
@@ -77,7 +98,7 @@ async def list_vault(
     items = result.scalars().all()
 
     return PaginatedResponse(
-        items=[MediaItemResponse.model_validate(item) for item in items],
+        items=[build_media_item_response(item) for item in items],
         total=total,
         page=page,
         per_page=per_page,
@@ -98,7 +119,7 @@ async def get_media_item(
     item = result.scalar_one_or_none()
     if not item:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Media item not found")
-    return item
+    return build_media_item_response(item)
 
 
 @router.get("/vault/{media_id}/segments", response_model=list[MediaSegmentResponse])
