@@ -15,8 +15,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy shared packages
 COPY shared/ /app/shared/
 
-# Copy API code
+# Copy workers (API dispatches Celery tasks from workers.*)
+COPY workers/ /app/workers/
+
+# Copy API code and migrations
 COPY apps/api/ /app/apps/api/
+COPY alembic.ini /app/alembic.ini
 
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
